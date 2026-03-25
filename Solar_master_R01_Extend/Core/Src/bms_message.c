@@ -399,8 +399,8 @@ static void SEND_BMS_STATUS(UART_HandleTypeDef *huart, uint32_t *prev_time)
                        (elec_valid != 0U) ? VOLTAGE_STATE_STR(GetVoltageState()) : "INVALID",
                        batt_i_str,
                        (elec_valid != 0U) ? CURRENT_STATE_STR(GetCurrentState()) : "INVALID",
-                       BMS_SAFETY_GetTargetLimitPct(),
-                       BMS_SAFETY_GetAppliedLimitPct());
+					   BMS_SAFETY_GetAppliedLimitPct(),
+					   BMS_SAFETY_GetTargetLimitPct());
     }
     else
     {
@@ -417,8 +417,8 @@ static void SEND_BMS_STATUS(UART_HandleTypeDef *huart, uint32_t *prev_time)
                        (elec_valid != 0U) ? VOLTAGE_STATE_STR(GetVoltageState()) : "INVALID",
                        batt_i_str,
                        (elec_valid != 0U) ? CURRENT_STATE_STR(GetCurrentState()) : "INVALID",
-                       BMS_SAFETY_GetTargetLimitPct(),
-                       BMS_SAFETY_GetAppliedLimitPct());
+					   BMS_SAFETY_GetAppliedLimitPct(),
+                       BMS_SAFETY_GetTargetLimitPct());
     }
 
     tx_len = BMS_MESSAGE_GetSafeLen(len, buf_size);

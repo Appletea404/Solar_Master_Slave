@@ -258,7 +258,7 @@ static void App_Bms_EnterForceStop(void)
     /* 첫 시도는 즉시 한 번 날려도 된다.
      * 실패하면 Task에서 재시도한다.
      */
-    (void)AppCan_SendForceStop();
+    (void)AppCan_SendForceStop(); // 전체시스템에 명령보냄 (slave)포함
 }
 
 /* =========================================================
