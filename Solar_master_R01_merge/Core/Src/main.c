@@ -278,9 +278,8 @@ int main(void)
 
 
   Can_Init();
-//  UartApp_Init();
-//
-//  printf("System start\r\n");
+
+
 
 
 

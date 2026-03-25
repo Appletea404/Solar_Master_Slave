@@ -1,0 +1,254 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36" version="29.6.5">
+  <diagram name="Solar EV System" id="solar-ev-system">
+    <mxGraphModel dx="906" dy="556" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1050" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="master" parent="1" style="swimlane;startSize=50;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=13;fontColor=#000080;arcSize=4;" value="MASTER STM32F411&#xa;(Solar_master_R01_merge)" vertex="1">
+          <mxGeometry height="790" width="430" x="210" y="50" as="geometry">
+            <mxRectangle height="50" width="200" x="210" y="50" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="app_bms" parent="master" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e88e5;fontColor=#ffffff;strokeColor=#0d47a1;fontStyle=1;fontSize=10;" value="App_BMS&#xa;통합 앱 계층" vertex="1">
+          <mxGeometry height="50" width="400" x="15" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="bms_sensor" parent="master" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7b1fa2;fontColor=#ffffff;strokeColor=#4a148c;fontSize=9;" value="BMS_SENSOR&#xa;INA219 / Temp / Gas" vertex="1">
+          <mxGeometry height="50" width="185" x="15" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="bms_safety" parent="master" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7b1fa2;fontColor=#ffffff;strokeColor=#4a148c;fontSize=9;" value="BMS_SAFETY_MGR&#xa;속도제한 / 경보" vertex="1">
+          <mxGeometry height="50" width="185" x="215" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="st_machine_m" parent="master" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1565c0;fontColor=#ffffff;strokeColor=#0d47a1;fontSize=9;" value="ST_MACHINE&#xa;UART1 리모컨 처리" vertex="1">
+          <mxGeometry height="50" width="185" x="15" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="safedrive" parent="master" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1565c0;fontColor=#ffffff;strokeColor=#0d47a1;fontSize=9;" value="SafeDrive&#xa;Manual / Auto 주행" vertex="1">
+          <mxGeometry height="50" width="185" x="215" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="car_drive" parent="master" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c62828;fontColor=#ffffff;strokeColor=#b71c1c;fontSize=9;" value="Car / Speed / Direction&#xa;DC Motor PWM 제어" vertex="1">
+          <mxGeometry height="50" width="185" x="15" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="ultrasonic_m" parent="master" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e53935;fontColor=#ffffff;strokeColor=#c62828;fontSize=9;" value="Ultrasonic&#xa;장애물 감지 (Auto)" vertex="1">
+          <mxGeometry height="50" width="185" x="215" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="app_can_ctrl" parent="master" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e65100;fontColor=#ffffff;strokeColor=#bf360c;fontSize=9;" value="AppCan_Control&#xa;SendTrace / SendSolar / SendForce" vertex="1">
+          <mxGeometry height="50" width="400" x="15" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="can_master" parent="master" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bf360c;fontColor=#ffffff;strokeColor=#870000;fontStyle=1;fontSize=10;" value="CAN Driver / MCP2515 (SPI1)&#xa;APP_CAN_ID_CTRL 송신" vertex="1">
+          <mxGeometry height="55" width="400" x="15" y="545" as="geometry" />
+        </mxCell>
+        <mxCell id="show_bms" parent="master" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00897b;fontColor=#ffffff;strokeColor=#004d40;fontSize=9;" value="SHOW_UART6_BMS  ·  1초 주기 상태 출력 (UART6 DMA)" vertex="1">
+          <mxGeometry height="45" width="400" x="15" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="slave" parent="1" style="swimlane;startSize=50;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=13;fontColor=#1b5e20;arcSize=4;" value="SLAVE STM32F411&#xa;(Solar_slave_R01)" vertex="1">
+          <mxGeometry height="790" width="430" x="1000" y="50" as="geometry">
+            <mxRectangle height="50" width="160" x="1000" y="50" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="st_slave" parent="slave" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2e7d32;fontColor=#ffffff;strokeColor=#1b5e20;fontStyle=1;fontSize=10;" value="STATEMACHINE&#xa;K/D/P 로컬 cmd + CAN 명령 수신" vertex="1">
+          <mxGeometry height="50" width="400" x="15" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="app_charger" parent="slave" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00695c;fontColor=#ffffff;strokeColor=#004d40;fontSize=9;" value="App_Charger  (Task + Tick1ms)&#xa;10ms PI제어 / 500ms 로그 주기" vertex="1">
+          <mxGeometry height="50" width="400" x="15" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="charger_state" parent="slave" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00796b;fontColor=#ffffff;strokeColor=#004d40;fontSize=9;" value="ChargerState_Run&#xa;INIT/WAIT/CHARGING&#xa;/DONE/FAULT" vertex="1">
+          <mxGeometry height="65" width="185" x="15" y="263" as="geometry" />
+        </mxCell>
+        <mxCell id="pi_ctrl" parent="slave" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00796b;fontColor=#ffffff;strokeColor=#004d40;fontSize=9;" value="SolarPiControl_Update&#xa;CC / CV / MPPT&#xa;PI 제어 → duty" vertex="1">
+          <mxGeometry height="65" width="185" x="215" y="263" as="geometry" />
+        </mxCell>
+        <mxCell id="tim4_pwm" parent="slave" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f57f17;fontColor=#ffffff;strokeColor=#e65100;fontSize=9;" value="TIM4 CH1 PWM&#xa;Buck 컨버터 스위칭" vertex="1">
+          <mxGeometry height="50" width="185" x="15" y="378" as="geometry" />
+        </mxCell>
+        <mxCell id="trace_m" parent="slave" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2e7d32;fontColor=#ffffff;strokeColor=#1b5e20;fontSize=9;" value="Trace (태양추적)&#xa;ADC S1~S4 + 서보 PI&#xa;TIM1 CH2/CH3 PWM" vertex="1">
+          <mxGeometry height="50" width="185" x="215" y="378" as="geometry" />
+        </mxCell>
+        <mxCell id="solar_sensing" parent="slave" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7b1fa2;fontColor=#ffffff;strokeColor=#4a148c;fontSize=9;" value="SolarSensing  (INA219 DMA 비동기 샘플링)&#xa;I2C2(Solar) + I2C3(Batt) + 배터리 필터링" vertex="1">
+          <mxGeometry height="50" width="400" x="15" y="473" as="geometry" />
+        </mxCell>
+        <mxCell id="can_slave" parent="slave" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bf360c;fontColor=#ffffff;strokeColor=#870000;fontStyle=1;fontSize=10;" value="CAN Driver / MCP2515 (SPI1)&#xa;APP_CAN_ID_CTRL 수신" vertex="1">
+          <mxGeometry height="55" width="400" x="15" y="568" as="geometry" />
+        </mxCell>
+        <mxCell id="show_charger" parent="slave" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00897b;fontColor=#ffffff;strokeColor=#004d40;fontSize=9;" value="SHOW_UART6_APP_CHARGER  ·  1초 주기 충전 상태 출력 (UART6 DMA)" vertex="1">
+          <mxGeometry height="45" width="400" x="15" y="673" as="geometry" />
+        </mxCell>
+        <mxCell id="can_bus" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ff6d00;fontColor=#ffffff;strokeColor=#e65100;fontStyle=1;fontSize=12;" value="CAN BUS&#xa;MCP2515 ↔ MCP2515" vertex="1">
+          <mxGeometry height="55" width="250" x="695" y="568" as="geometry" />
+        </mxCell>
+        <mxCell id="bt_remote" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#546e7a;fontColor=#ffffff;strokeColor=#263238;fontSize=9;" value="📱 BT 리모컨&#xa;UART1 RX&#xa;F/B/L/R/S/A/P/D/K" vertex="1">
+          <mxGeometry height="65" width="155" x="22" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="ina219_bms" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7b1fa2;fontColor=#ffffff;strokeColor=#4a148c;fontSize=9;" value="INA219 (BMS)&#xa;배터리 전류/전압&#xa;I2C1 DMA" vertex="1">
+          <mxGeometry height="65" width="155" x="22" y="225" as="geometry" />
+        </mxCell>
+        <mxCell id="temp_gas_hw" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7b1fa2;fontColor=#ffffff;strokeColor=#4a148c;fontSize=9;" value="온도 / 가스 센서&#xa;배터리 안전 모니터&#xa;ADC DMA" vertex="1">
+          <mxGeometry height="65" width="155" x="22" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="dc_motor_hw" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c62828;fontColor=#ffffff;strokeColor=#b71c1c;fontSize=9;" value="DC Motor (L/R)&#xa;구동 바퀴&#xa;TIM2 PWM" vertex="1">
+          <mxGeometry height="65" width="155" x="22" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="us_hw" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#546e7a;fontColor=#ffffff;strokeColor=#263238;fontSize=9;" value="초음파 센서 3개&#xa;L / C / R&#xa;장애물 감지" vertex="1">
+          <mxGeometry height="65" width="155" x="22" y="545" as="geometry" />
+        </mxCell>
+        <mxCell id="uart6_bms_mon" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00897b;fontColor=#ffffff;strokeColor=#004d40;fontSize=9;" value="💻 모니터 (UART6)&#xa;BMS 상태 로그&#xa;PC / BT" vertex="1">
+          <mxGeometry height="65" width="155" x="22" y="655" as="geometry" />
+        </mxCell>
+        <mxCell id="bt_uart6_slave" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00897b;fontColor=#ffffff;strokeColor=#004d40;fontSize=9;" value="📱 BT 모니터 (UART6)&#xa;K/D/P 로컬 명령&#xa;+ 충전상태 수신" vertex="1">
+          <mxGeometry height="65" width="160" x="1465" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="solar_panel" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9a825;fontColor=#000000;strokeColor=#f57f17;fontStyle=1;fontSize=11;" value="☀️ 태양전지 패널&#xa;입력 전원" vertex="1">
+          <mxGeometry height="65" width="160" x="1465" y="225" as="geometry" />
+        </mxCell>
+        <mxCell id="ina219_solar_hw" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7b1fa2;fontColor=#ffffff;strokeColor=#4a148c;fontSize=9;" value="INA219 (Solar)&#xa;Vpv / Ipv 측정&#xa;I2C2 DMA" vertex="1">
+          <mxGeometry height="60" width="160" x="1465" y="335" as="geometry" />
+        </mxCell>
+        <mxCell id="battery_hw" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9a825;fontColor=#000000;strokeColor=#f57f17;fontStyle=1;fontSize=11;" value="🔋 배터리 (1셀 Li)&#xa;충전 대상" vertex="1">
+          <mxGeometry height="65" width="160" x="1465" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="ina219_batt_hw" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7b1fa2;fontColor=#ffffff;strokeColor=#4a148c;fontSize=9;" value="INA219 (Batt)&#xa;Vbat / Ichg 측정&#xa;I2C3 DMA" vertex="1">
+          <mxGeometry height="60" width="160" x="1465" y="548" as="geometry" />
+        </mxCell>
+        <mxCell id="buck_hw" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f57f17;fontColor=#ffffff;strokeColor=#e65100;fontStyle=1;fontSize=9;" value="Buck 컨버터&#xa;태양→배터리 충전&#xa;PWM 스위칭" vertex="1">
+          <mxGeometry height="65" width="160" x="1465" y="655" as="geometry" />
+        </mxCell>
+        <mxCell id="servo_hw" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c62828;fontColor=#ffffff;strokeColor=#b71c1c;fontSize=9;" value="서보 모터 2축&#xa;태양추적 기구부&#xa;TIM1 CH2/CH3" vertex="1">
+          <mxGeometry height="60" width="160" x="1465" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="bt_remote" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#546e7a;strokeWidth=2;fontSize=9;fontStyle=1;" target="st_machine_m" value="UART1 IT">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="ina219_bms" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#7b1fa2;strokeWidth=2;fontSize=9;" target="bms_sensor" value="I2C1 DMA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="temp_gas_hw" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#7b1fa2;strokeWidth=2;fontSize=9;" target="bms_sensor" value="ADC DMA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="bms_sensor" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#1e88e5;strokeWidth=1.5;" target="app_bms" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="bms_safety" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#1e88e5;strokeWidth=1.5;" target="app_bms" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5b" edge="1" parent="1" source="bms_sensor" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#7b1fa2;strokeWidth=1.5;dashed=1;" target="bms_safety" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="app_bms" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#1565c0;strokeWidth=1.5;" target="st_machine_m" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="app_bms" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#e65100;strokeWidth=1.5;fontSize=9;" target="app_can_ctrl" value="D/K/P 명령">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="st_machine_m" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#1565c0;strokeWidth=1.5;" target="safedrive" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="safedrive" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#c62828;strokeWidth=1.5;" target="car_drive" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="car_drive" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#c62828;strokeWidth=2;fontSize=9;" target="dc_motor_hw" value="TIM2 PWM">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="us_hw" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#546e7a;strokeWidth=1.5;" target="ultrasonic_m" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="app_can_ctrl" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#e65100;strokeWidth=1.5;" target="can_master" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="can_master" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#ff6d00;strokeWidth=3;" target="can_bus" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="can_bus" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#ff6d00;strokeWidth=3;fontStyle=1;fontSize=10;" target="can_slave" value="CAN H/L">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" edge="1" parent="1" source="can_slave" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#e65100;strokeWidth=2;" target="st_slave" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="1" source="st_slave" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#00695c;strokeWidth=2;fontSize=9;fontStyle=1;" target="app_charger" value="solar_flag=1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e17" edge="1" parent="1" source="app_charger" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#00796b;strokeWidth=1.5;" target="charger_state" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e18" edge="1" parent="1" source="charger_state" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#00796b;strokeWidth=1.5;" target="pi_ctrl" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e19" edge="1" parent="1" source="pi_ctrl" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#f57f17;strokeWidth=2;fontSize=9;fontStyle=1;" target="tim4_pwm" value="duty">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e20" edge="1" parent="1" source="solar_sensing" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#7b1fa2;strokeWidth=1.5;" target="charger_state" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e21" edge="1" parent="1" source="st_slave" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#2e7d32;strokeWidth=1.5;" target="trace_m" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e22" edge="1" parent="1" source="tim4_pwm" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#f57f17;strokeWidth=2;fontSize=9;" target="buck_hw" value="PWM duty">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e23" edge="1" parent="1" source="buck_hw" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#f9a825;strokeWidth=3;fontStyle=1;fontSize=9;" target="battery_hw" value="충전전류">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e24" edge="1" parent="1" source="solar_panel" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#f9a825;strokeWidth=3;dashed=1;fontStyle=1;fontSize=9;" target="buck_hw" value="전력입력">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e25" edge="1" parent="1" source="solar_panel" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#f9a825;strokeWidth=2;" target="ina219_solar_hw" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e26" edge="1" parent="1" source="ina219_solar_hw" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#7b1fa2;strokeWidth=2;fontSize=9;" target="solar_sensing" value="I2C2 DMA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e27" edge="1" parent="1" source="battery_hw" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#f9a825;strokeWidth=2;" target="ina219_batt_hw" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e28" edge="1" parent="1" source="ina219_batt_hw" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#7b1fa2;strokeWidth=2;fontSize=9;" target="solar_sensing" value="I2C3 DMA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e29" edge="1" parent="1" source="trace_m" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#c62828;strokeWidth=2;fontSize=9;" target="servo_hw" value="TIM1 PWM">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e30" edge="1" parent="1" source="bt_uart6_slave" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#00897b;strokeWidth=2;fontSize=9;" target="st_slave" value="UART6 IT / K·D·P">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e31" edge="1" parent="1" source="show_charger" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#00897b;strokeWidth=2;fontSize=9;" target="bt_uart6_slave" value="UART6 DMA / 1초">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e32" edge="1" parent="1" source="show_bms" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#00897b;strokeWidth=2;fontSize=9;" target="uart6_bms_mon" value="UART6 DMA / 1초">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="leg_bg" parent="1" style="rounded=1;fillColor=#f5f5f5;strokeColor=#aaaaaa;" value="" vertex="1">
+          <mxGeometry height="200" width="260" x="695" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="leg_title" parent="1" style="text;html=1;fontStyle=1;fontSize=11;align=center;" value="범례 (Legend)" vertex="1">
+          <mxGeometry height="25" width="260" x="695" y="665" as="geometry" />
+        </mxCell>
+        <mxCell id="lg1" parent="1" style="rounded=1;fillColor=#ff6d00;fontColor=#ffffff;strokeColor=#e65100;fontSize=9;" value="CAN 통신" vertex="1">
+          <mxGeometry height="22" width="115" x="705" y="695" as="geometry" />
+        </mxCell>
+        <mxCell id="lg2" parent="1" style="rounded=1;fillColor=#7b1fa2;fontColor=#ffffff;strokeColor=#4a148c;fontSize=9;" value="센서 (I2C / ADC)" vertex="1">
+          <mxGeometry height="22" width="115" x="830" y="695" as="geometry" />
+        </mxCell>
+        <mxCell id="lg3" parent="1" style="rounded=1;fillColor=#f57f17;fontColor=#ffffff;strokeColor=#e65100;fontSize=9;" value="PWM 출력" vertex="1">
+          <mxGeometry height="22" width="115" x="705" y="725" as="geometry" />
+        </mxCell>
+        <mxCell id="lg4" parent="1" style="rounded=1;fillColor=#00897b;fontColor=#ffffff;strokeColor=#004d40;fontSize=9;" value="UART 로그/명령" vertex="1">
+          <mxGeometry height="22" width="115" x="830" y="725" as="geometry" />
+        </mxCell>
+        <mxCell id="lg5" parent="1" style="rounded=1;fillColor=#f9a825;fontColor=#000000;strokeColor=#f57f17;fontSize=9;" value="전력 경로" vertex="1">
+          <mxGeometry height="22" width="115" x="705" y="755" as="geometry" />
+        </mxCell>
+        <mxCell id="lg6" parent="1" style="rounded=1;fillColor=#c62828;fontColor=#ffffff;strokeColor=#b71c1c;fontSize=9;" value="DC 모터 / 구동계" vertex="1">
+          <mxGeometry height="22" width="115" x="830" y="755" as="geometry" />
+        </mxCell>
+        <mxCell id="lg7" parent="1" style="rounded=1;fillColor=#1e88e5;fontColor=#ffffff;strokeColor=#0d47a1;fontSize=9;" value="Master 제어 (파랑)" vertex="1">
+          <mxGeometry height="22" width="115" x="705" y="785" as="geometry" />
+        </mxCell>
+        <mxCell id="lg8" parent="1" style="rounded=1;fillColor=#2e7d32;fontColor=#ffffff;strokeColor=#1b5e20;fontSize=9;" value="Slave 충전 (초록)" vertex="1">
+          <mxGeometry height="22" width="115" x="830" y="785" as="geometry" />
+        </mxCell>
+        <mxCell id="lg9" parent="1" style="rounded=1;fillColor=#546e7a;fontColor=#ffffff;strokeColor=#263238;fontSize=9;" value="외부 장치 (회색)" vertex="1">
+          <mxGeometry height="22" width="115" x="705" y="815" as="geometry" />
+        </mxCell>
+        <mxCell id="lg10" parent="1" style="text;html=1;fontSize=9;align=center;" value="---- 전력선 (점선)" vertex="1">
+          <mxGeometry height="22" width="115" x="830" y="815" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
