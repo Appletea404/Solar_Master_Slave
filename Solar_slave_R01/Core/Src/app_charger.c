@@ -503,9 +503,22 @@ static void AppCharger_PrintStatus(void)
 }
 
 /* =========================================================
- * App_Charger_Init
+ * App_Charger_HwInit
+ * ---------------------------------------------------------
+ * 보드 전원 인가 후 1회만 호출한다.
+ *
+ * 수행 내용:
+ *   - TIM4 PWM 시작 (buck 컨버터 출력, duty=0)
+ *   - TIM10 1ms 타이머 시작
+ *   - I2C2 / I2C3 하드웨어 리셋 (DeInit → ReInit)
+ *   - INA219 센서 초기화 (블로킹 I2C)
+ *   - 최초 DMA 읽기 시작
+ *
+ * 주의:
+ *   K 토글(ON/OFF) 시에는 이 함수를 호출하지 않는다.
+ *   센서·타이머를 반복 초기화하면 I2C BUSY / freeze 원인이 된다.
  * ========================================================= */
-void App_Charger_Init(void)
+void App_Charger_HwInit(void)
 {
     HAL_StatusTypeDef st_pwm;
     HAL_StatusTypeDef st_tim10;
@@ -539,16 +552,11 @@ void App_Charger_Init(void)
     }
 
     App_Charger_LogString("\r\n");
-    App_Charger_LogString("Solar charger init begin.\r\n");
+    App_Charger_LogString("Solar charger HW init begin.\r\n");
 
-    /* I2C 버스 강제 리셋
+    /* I2C 버스 강제 리셋 (최초 1회)
      * ---------------------------------------------------------
-     * 목적:
-     *   K 토글 재진입 시 이전 DMA 읽기가 아직 진행 중이거나
-     *   I2C 상태가 BUSY_RX / ERROR에 빠져있으면
-     *   SolarSensing_Init 내부의 HAL_I2C_Mem_Write 가 HAL_BUSY를 반환해
-     *   센서 초기화가 실패한다.
-     *   DeInit → ReInit 으로 I2C 하드웨어와 HAL 상태를 완전히 초기화한다.
+     * 이전 DMA 상태나 BUSY/ERROR를 완전히 정리한 뒤 센서를 초기화한다.
      * --------------------------------------------------------- */
     if (hi2c2.hdmarx != NULL)
     {
@@ -589,35 +597,70 @@ void App_Charger_Init(void)
         App_Charger_LogString("Battery sensor init OK\r\n");
     }
 
-    SolarPiControl_Init(&g_ctrl);
-    ChargerState_Init(&g_charger, &g_solar_sensor, &g_batt_sensor, &g_ctrl);
-
-    /* 초기 샘플 획득 시작
-     * -----------------------------------------------------
-     * 이후 주기 DMA 시작은 ChargerState_Run() 마지막에서 이어진다.
-     */
+    /* 최초 DMA 읽기 시작 */
     (void)SolarSensing_StartUpdateDMA(&g_solar_sensor);
     (void)SolarSensing_StartUpdateDMA(&g_batt_sensor);
 
-    App_Charger_LogString("Solar charger init done.\r\n");
+    App_Charger_LogString("Solar charger HW init done.\r\n");
 
-    /* Init 결과를 UART6으로 즉시 출력 (블로킹, 짧은 문자열) */
+    /* UART6 즉시 출력 */
     {
         static char init_msg[64];
         int init_len = snprintf(init_msg, sizeof(init_msg),
-                                "[CHARGER INIT] PV:%s BAT:%s\r\n",
+                                "[CHARGER HW INIT] PV:%s BAT:%s\r\n",
                                 g_solar_init_ok ? "OK" : "FAIL",
                                 g_batt_init_ok  ? "OK" : "FAIL");
         if (init_len > 0)
+        {
+            if (huart6.gState == HAL_UART_STATE_READY)
             {
-                /* 현재 UART6 포트가 사용 가능한 상태인지 확인 */
-                if (huart6.gState == HAL_UART_STATE_READY)
-                {
-                    /* DMA를 통한 비동기 전송 시작 (타임아웃 파라미터 제거) */
-                    HAL_UART_Transmit_DMA(&huart6, (uint8_t *)init_msg, (uint16_t)init_len);
-                }
+                HAL_UART_Transmit_DMA(&huart6, (uint8_t *)init_msg, (uint16_t)init_len);
             }
+        }
     }
+}
+
+/* =========================================================
+ * App_Charger_Init  (소프트 리셋)
+ * ---------------------------------------------------------
+ * K ON 토글 시 호출한다.
+ *
+ * 수행 내용:
+ *   - 제어 pending 카운터 / 로그 큐 리셋
+ *   - duty 0으로 강제
+ *   - PI 제어 / 충전 상태머신 리셋
+ *   - DMA 읽기 재시작 (이미 진행 중이면 무시됨)
+ *
+ * 수행하지 않는 내용:
+ *   - I2C 리셋 / 센서 재초기화 (freeze 원인 → HwInit 에서만 수행)
+ *   - TIM4 / TIM10 재시작 (이미 동작 중)
+ * ========================================================= */
+void App_Charger_Init(void)
+{
+    g_pending_ctrl_10ms = 0U;
+    g_pending_dbg_500ms = 0U;
+
+    g_uart2_tx_busy   = 0U;
+    g_log_queue_head  = 0U;
+    g_log_queue_tail  = 0U;
+    g_log_queue_count = 0U;
+    g_log_drop_count  = 0U;
+
+    memset((void *)g_log_queue, 0, sizeof(g_log_queue));
+    memset((void *)g_log_len,   0, sizeof(g_log_len));
+
+    /* duty 강제 0 */
+    AppCharger_ApplyDuty(0.0f);
+
+    /* PI 제어 및 충전 상태머신 리셋 */
+    SolarPiControl_Init(&g_ctrl);
+    ChargerState_Init(&g_charger, &g_solar_sensor, &g_batt_sensor, &g_ctrl);
+
+    /* DMA 읽기 재시작 (센서가 이미 busy면 HAL_BUSY 반환 후 무시됨) */
+    (void)SolarSensing_StartUpdateDMA(&g_solar_sensor);
+    (void)SolarSensing_StartUpdateDMA(&g_batt_sensor);
+
+    App_Charger_LogString("Solar charger start.\r\n");
 }
 
 
@@ -716,6 +759,7 @@ void App_Charger_Tick1ms(void)
 /* =========================================================
  * HAL I2C callback routing
  * ========================================================= */
+
 void App_Charger_I2CMemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
     SolarSensing_I2C_MemRxCpltCallback(hi2c);

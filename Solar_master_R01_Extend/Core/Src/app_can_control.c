@@ -69,3 +69,12 @@ uint8_t AppCan_SendForceReinit(void)
 {
     return AppCan_SendCtrl(APP_CMD_FORCE_CTRL, APP_FORCE_REINIT);
 }
+
+/* =========================================================
+ * DRIVE ON / OFF (자율주행 모드)
+ * ========================================================= */
+uint8_t AppCan_SendDrive(uint8_t on)
+{
+    return AppCan_SendCtrl(APP_CMD_DRIVE_CTRL,
+                           (on != 0U) ? APP_CTRL_ON : APP_CTRL_OFF);
+}

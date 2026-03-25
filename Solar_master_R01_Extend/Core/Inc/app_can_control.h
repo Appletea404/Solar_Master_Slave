@@ -17,6 +17,7 @@ uint8_t AppCan_SendTrace(uint8_t on);
 uint8_t AppCan_SendSolar(uint8_t on);
 uint8_t AppCan_SendForceStop(void);
 uint8_t AppCan_SendForceReinit(void);
+uint8_t AppCan_SendDrive(uint8_t on);
 
 
 

@@ -92,6 +92,8 @@ typedef struct
     /* CAN pending */
     uint8_t track_tx_pending;
     uint8_t charge_tx_pending;
+    uint8_t drive_on;
+    uint8_t drive_tx_pending;
 
     uint8_t force_tx_pending;
     uint8_t force_tx_value;
@@ -173,6 +175,8 @@ static void App_Bms_ResetLocalState(void)
 
     g_app_bms.track_tx_pending = 0U;
     g_app_bms.charge_tx_pending = 0U;
+    g_app_bms.drive_on = 0U;
+    g_app_bms.drive_tx_pending = 0U;
 
     g_app_bms.force_tx_pending = 0U;
     g_app_bms.force_tx_value = 0U;
@@ -189,11 +193,15 @@ static void App_Bms_ToggleMode(void)
     if (g_app_bms.mode == APP_BMS_MODE_MANUAL)
     {
         g_app_bms.mode = APP_BMS_MODE_AUTO;
+        g_app_bms.drive_on = 1U;
     }
     else
     {
         g_app_bms.mode = APP_BMS_MODE_MANUAL;
+        g_app_bms.drive_on = 0U;
     }
+
+    g_app_bms.drive_tx_pending = 1U;
 }
 
 static void App_Bms_SetTrack(uint8_t on)
@@ -240,12 +248,14 @@ static void App_Bms_EnterForceStop(void)
     /* 즉시 주행 정지 */
     Car_Stop();
 
-    /* 추적 / 충전 강제 OFF */
+    /* 추적 / 충전 / 자율주행 강제 OFF */
     g_app_bms.track_on = 0U;
     g_app_bms.charge_on = 0U;
+    g_app_bms.drive_on = 0U;
 
     g_app_bms.track_tx_pending = 1U;
     g_app_bms.charge_tx_pending = 1U;
+    g_app_bms.drive_tx_pending = 1U;
 
     /* 상태머신 재초기화 (TraceInit)
      * manual / auto 구분 없이 주행 관련 상태를 초기값으로 리셋한다.
@@ -258,7 +268,7 @@ static void App_Bms_EnterForceStop(void)
     /* 첫 시도는 즉시 한 번 날려도 된다.
      * 실패하면 Task에서 재시도한다.
      */
-    (void)AppCan_SendForceStop(); // 전체시스템에 명령보냄 (slave)포함
+    (void)AppCan_SendForceStop();
 }
 
 /* =========================================================
@@ -282,10 +292,12 @@ static void App_Bms_ReinitRuntime(void)
 
     g_app_bms.track_on = 0U;
     g_app_bms.charge_on = 0U;
+    g_app_bms.drive_on = 0U;
 
     /* slave에도 OFF 재전달 가능하도록 pending 세트 */
     g_app_bms.track_tx_pending = 1U;
     g_app_bms.charge_tx_pending = 1U;
+    g_app_bms.drive_tx_pending = 1U;
 
     /* 센서 / safety / state machine 재초기화 */
     BMS_SENSOR_Init();
@@ -397,6 +409,16 @@ static void App_Bms_ProcessCanPending(void)
         if (ret == 0U)
         {
             g_app_bms.charge_tx_pending = 0U;
+        }
+    }
+
+    /* 4) drive (자율주행 ON/OFF) */
+    if (g_app_bms.drive_tx_pending != 0U)
+    {
+        ret = AppCan_SendDrive(g_app_bms.drive_on);
+        if (ret == 0U)
+        {
+            g_app_bms.drive_tx_pending = 0U;
         }
     }
 }

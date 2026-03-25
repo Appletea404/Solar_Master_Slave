@@ -133,16 +133,16 @@ void ST_FLAG(uint8_t cmd)
  * ========================================================= */
 void ST_MACHINE(void)
 {
-    if (rx_flag != 0U)		// UART1 수신 플래그
+    if (rx_flag != 0U)
     {
         /* 필요 시 echo */
         HAL_UART_Transmit(&huart1, (uint8_t *)&rx_cmd, 1, 10);
 
-        ST_FLAG(rx_cmd);							// Manual / Auto 판단
+        ST_FLAG(rx_cmd);
 
         if (App_Bms_IsManualMode() != 0U)
         {
-            SafeDriveManual_HandleCmd(rx_cmd);		// 수동
+            (void)SafeDriveManual_HandleCmd(rx_cmd);
         }
 
         rx_flag = 0U;
@@ -150,7 +150,7 @@ void ST_MACHINE(void)
 
     if (App_Bms_IsAutoMode() != 0U)
     {
-        SafeDriveAuto_Task();		// 자율 주행
+        SafeDriveAuto_Task();
     }
 }
 

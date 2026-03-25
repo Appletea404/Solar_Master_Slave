@@ -39,9 +39,12 @@ extern UART_HandleTypeDef huart6;
 /* =========================================================
  * 내부 상태
  * ========================================================= */
-static bool trace_flag = 0;
-static bool solar_flag = 0;
-static bool force_lock = 0;
+static bool trace_flag    = 0;
+static bool solar_flag    = 0;
+static bool force_lock    = 0;
+static bool auto_drive    = 0;  /* 자율주행 모드 중 1
+                                 * → trace 수동 활성화 차단
+                                 * → 자율주행 종료 후에야 trace ON 허용 */
 
 /* UART6 1바이트 수신 */
 static volatile uint8_t rxData[1];
@@ -58,14 +61,16 @@ uint16_t adcValue[6];
 /* ---------------------------------------------------------
  * Trace ON / OFF 설정
  * ---------------------------------------------------------
- * force stop 중에는 ON 요청 무시
+ * 차단 조건:
+ *   1) force_lock 중 ON 요청 무시
+ *   2) auto_drive 중 ON 요청 무시 (자율주행 종료 후에야 허용)
  * OFF는 언제나 허용
  * --------------------------------------------------------- */
 static void ST_SetTrace(bool on)
 {
     if (on)
     {
-        if (force_lock)
+        if (force_lock || auto_drive)
         {
             return;
         }
@@ -76,6 +81,35 @@ static void ST_SetTrace(bool on)
     {
         trace_flag = 0;
         Trace_ForceInit();
+    }
+}
+
+/* ---------------------------------------------------------
+ * 자율주행 모드 ON / OFF
+ * ---------------------------------------------------------
+ * ON : Trace_ForceInit() 후 auto_drive = 1
+ *      → trace 수동 제어 차단
+ * OFF: auto_drive = 0
+ *      → 이후 D키 또는 CAN TRACE_CTRL 로 trace 활성화 가능
+ * --------------------------------------------------------- */
+static void ST_SetAutoDrive(bool on)
+{
+    if (on)
+    {
+        if (force_lock)
+        {
+            return;
+        }
+
+        /* trace 트래커를 초기 위치로 복귀 후 자율주행 시작 */
+        trace_flag = 0;
+        Trace_ForceInit();
+        auto_drive = 1;
+    }
+    else
+    {
+        auto_drive = 0;
+        /* trace 활성화는 이후 수동으로만 가능 (자동으로 켜지지 않음) */
     }
 }
 
@@ -124,6 +158,7 @@ static void ST_SetSolar(bool on)
 static void ST_EnterForceStop(void)
 {
     /* 먼저 기능 OFF */
+    ST_SetAutoDrive(false);
     ST_SetTrace(false);
     ST_SetSolar(false);
 
@@ -145,15 +180,18 @@ static void ST_ReinitAll(void)
     trace_flag = 0;
     solar_flag = 0;
     force_lock = 0;
+    auto_drive = 0;
 
     /* 추적 모듈 초기 위치로 복귀 */
     Trace_ForceInit();
 
     /* 충전 모듈 재초기화 후 출력은 꺼둠
      * -----------------------------------
-     * Init은 내부 상태/센서 준비 용도
+     * HwInit : I2C / 센서 / 타이머 완전 재초기화
+     * Init   : PI 제어 / 상태머신 소프트 리셋
      * 실제 충전 시작은 solar_flag=1일 때만 Task가 돎
      */
+    App_Charger_HwInit();
     App_Charger_Init();
     App_Charger_Stop();
 }
@@ -171,6 +209,10 @@ static void ST_HandleCanControl(uint8_t cmd, uint8_t value)
 
         case APP_CMD_SOLAR_CTRL:
             ST_SetSolar(value == APP_CTRL_ON);
+            break;
+
+        case APP_CMD_DRIVE_CTRL:
+            ST_SetAutoDrive(value == APP_CTRL_ON);
             break;
 
         case APP_CMD_FORCE_CTRL:
@@ -192,7 +234,8 @@ static void ST_HandleCanControl(uint8_t cmd, uint8_t value)
 /* ---------------------------------------------------------
  * UART6 로컬 테스트 명령 처리
  * ---------------------------------------------------------
- * D : trace 토글
+ * A : 자율주행 토글 (ON 시 Trace Init + trace 수동 잠금)
+ * D : trace 토글  (자율주행 중에는 ON 차단)
  * K : solar 토글
  * P : force stop / reinit 토글
  * --------------------------------------------------------- */
@@ -200,6 +243,13 @@ static void ST_HandleLocalBtCmd(uint8_t cmd)
 {
     switch (cmd)
     {
+        case 'A':
+            if (force_lock == 0)
+            {
+                ST_SetAutoDrive(!auto_drive);
+            }
+            break;
+
         case 'D':
             if (force_lock == 0)
             {
@@ -252,8 +302,13 @@ void STMACHINE_Init(void)
     trace_flag = 0;
     solar_flag = 0;
     force_lock = 0;
+    auto_drive = 0;
 
     Trace_ForceInit();
+
+    /* 하드웨어 초기화 (1회): I2C / INA219 / TIM4 / TIM10 */
+    App_Charger_HwInit();
+    /* 소프트 리셋: PI 제어 / 상태머신 초기화 후 출력 꺼둠 */
     App_Charger_Init();
     App_Charger_Stop();
 }
@@ -300,10 +355,11 @@ void SHOW_UART2_TRACE(void)
     printf("[TRACE] ADC:%d|%d|%d|%d  X:%d|Y:%d\r\n",
            S1, S2, S3, S4, error_x, error_y);
 
-    printf("[ST] TRACE:%s SOLAR:%s FORCE:%s\r\n",
+    printf("[ST] TRACE:%s SOLAR:%s FORCE:%s AUTO:%s\r\n",
            trace_flag ? "ON" : "OFF",
            solar_flag ? "ON" : "OFF",
-           force_lock ? "ON" : "OFF");
+           force_lock ? "ON" : "OFF",
+           auto_drive ? "ON" : "OFF");
 }
 
 void SHOW_UART6_TRACE(void)
@@ -326,12 +382,13 @@ void SHOW_UART6_TRACE(void)
     trace_uart6_prevTick = now;
 
     len = sprintf(msgBuf,
-                  "[BT_TRACE] ADC:%d|%d|%d|%d X:%d|Y:%d TRACE:%s SOLAR:%s FORCE:%s\r\n",
+                  "[BT_TRACE] ADC:%d|%d|%d|%d X:%d|Y:%d TRACE:%s SOLAR:%s FORCE:%s AUTO:%s\r\n",
                   S1, S2, S3, S4,
                   error_x, error_y,
                   trace_flag ? "ON" : "OFF",
                   solar_flag ? "ON" : "OFF",
-                  force_lock ? "ON" : "OFF");
+                  force_lock ? "ON" : "OFF",
+                  auto_drive ? "ON" : "OFF");
 
     HAL_UART_Transmit_DMA(&huart6, (uint8_t *)msgBuf, (uint16_t)len);
 }
@@ -387,7 +444,7 @@ void ST_MACHINE(void)
     }
 
     /* 디버그 출력 */
-//    SHOW_UART6_TRACE();
-    SHOW_UART6_APP_CHARGER();
+    SHOW_UART6_TRACE();
+//    SHOW_UART6_APP_CHARGER();
 }
 

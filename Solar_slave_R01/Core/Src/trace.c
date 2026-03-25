@@ -95,10 +95,10 @@ void Sensor_Filter()
   filter_index++;
   if(filter_index >= FILTER_SIZE) filter_index = 0;
 
-  S1 = sum_array[2] / FILTER_SIZE;
-  S2 = sum_array[3] / FILTER_SIZE;
-  S3 = sum_array[4] / FILTER_SIZE;
-  S4 = sum_array[5] / FILTER_SIZE;
+  S1 = sum_array[2] / FILTER_SIZE;		//1
+  S2 = sum_array[3] / FILTER_SIZE;		//2
+  S3 = sum_array[4] / FILTER_SIZE;		//3
+  S4 = sum_array[5] / FILTER_SIZE;		//4
 }
 
 
@@ -149,10 +149,10 @@ void Target_Update()
 
   // 최소, 최대각 설정(ARR 1000기준 CCR 20~120 동작)
   if(target_pan < 20) target_pan = 20;
-  if(target_pan > 120) target_pan = 120;
+  if(target_pan > 120) target_pan = 120;		//수평
 
-  if(target_tilt < 40) target_tilt = 40;
-  if(target_tilt > 110) target_tilt = 110;
+  if(target_tilt < 40) target_tilt = 40;		//50, 100 또는 60,90
+  if(target_tilt > 110) target_tilt = 110;		//수직
 }
 
 int pan = 70;
