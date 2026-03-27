@@ -517,6 +517,7 @@ void App_Bms_Task(void)
     /* 5) CAN pending 처리
      * force stop 중에도 OFF / force 명령은 나가야 하므로 계속 처리
      */
+//	ST_MACHINE(); //이거테스트용임
     App_Bms_ProcessCanPending();
 
     /* 6) 로그 */

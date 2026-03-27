@@ -31,11 +31,31 @@
 
 
 
-#include "can.h"
-#include "led_app.h"
+// CAR
+#include "car.h"
+#include "direction.h"
+#include "speed.h"
+#include "delay.h"
+#include "stdio.h"
+#include "ultrasonic.h"
 #include "statemachine.h"
-#include "app_charger.h"
 
+
+// BMS
+#include "bms_temp.h"
+#include "bms_gas.h"
+#include "bms_ina219.h"
+#include "bms_message.h"
+
+
+#include "app_bms.h"
+
+// SPI
+#include "can.h"
+
+
+
+#include <stdio.h>
 
 
 /* USER CODE END Includes */
@@ -54,23 +74,26 @@
 /* USER CODE BEGIN PM */
 
 
-#ifdef __GNUC__
-#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
-#else
-#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
-#endif
 
-PUTCHAR_PROTOTYPE
-{
-    if (ch == '\n')
-    {
-        uint8_t cr = '\r';
-        HAL_UART_Transmit(&huart2, &cr, 1U, 0xFFFFU);
-    }
+//#ifdef __GNUC__
+//#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+//#else
+//#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+//#endif
+//
+//PUTCHAR_PROTOTYPE
+//{
+//    if (ch == '\n')
+//    {
+//        uint8_t cr = '\r';
+//        HAL_UART_Transmit(&huart2, &cr, 1U, 0xFFFFU);
+//    }
+//
+//    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1U, 0xFFFFU);
+//    return ch;
+//}
+//
 
-    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1U, 0xFFFFU);
-    return ch;
-}
 
 
 
@@ -80,11 +103,24 @@ PUTCHAR_PROTOTYPE
 
 /* USER CODE BEGIN PV */
 
+
+// Moserial buff
+//static uint8_t uart2_rx_byte = 0U;
+
+volatile uint16_t adcValue[2] = {0U, 0U};
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+
+
+
+//static const char *Temp_StateStr(TEMP_STATE st);
+//
+
 
 /* USER CODE END PFP */
 
@@ -93,7 +129,7 @@ void SystemClock_Config(void);
 
 
 /* =========================================================
- * HAL callback forwarding
+ * HAL callback forwarding (SPI / GPIO / TIM)
  * ========================================================= */
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
@@ -110,51 +146,66 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     Can_ExtiCallback(GPIO_Pin);
 }
 
-/*
- *  APP_Charger_CallBack
- */
-
-/* =========================================================
- * TIM10 1ms tick -> app_charger 전달
- * ========================================================= */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    if (htim->Instance == TIM10)
+    if (htim->Instance == TIM11)
     {
-        App_Charger_Tick1ms();
+        /* 필요 시 하위 모듈 tick 연결 */
     }
 }
 
 /* =========================================================
- * I2C DMA rx complete -> app_charger 전달
+ * UART RX complete
+ * ---------------------------------------------------------
+ * UART1 : 기존 리모컨 / statemachine 경로
+ * UART2 : moserial 입력 테스트 경로 (현재 비활성)
  * ========================================================= */
-void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-    App_Charger_I2CMemRxCpltCallback(hi2c);
+    if (huart == NULL)
+    {
+        return;
+    }
+
+    /* UART1 기존 리모컨 경로 */
+    STMACHINE_UartRxCpltCallback(huart);
+
+    /* UART2 moserial 입력 -> UART1과 같은 명령 경로 */
+//    if (huart->Instance == USART2)
+//    {
+////        STMACHINE_SubmitCmd(uart2_rx_byte);
+////        HAL_UART_Receive_IT(&huart2, &uart2_rx_byte, 1U);
+//    }
 }
 
-/* =========================================================
- * I2C error -> app_charger 전달
- * ========================================================= */
-void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
-{
-    App_Charger_I2CErrorCallback(hi2c);
-}
 
-/* =========================================================
- * UART DMA tx complete -> app_charger 전달
- * ========================================================= */
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
-    App_Charger_UartTxCpltCallback(huart);
+    BMS_MESSAGE_UartTxCpltCallback(huart);
+
+    /* 다른 UART DMA 완료 처리 있으면 여기 계속 추가 */
 }
 
-/* =========================================================
- * UART error -> app_charger 전달
- * ========================================================= */
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
-    App_Charger_UartErrorCallback(huart);
+    BMS_MESSAGE_UartErrorCallback(huart);
+
+    /* 다른 UART 에러 처리 있으면 여기 계속 추가 */
+}
+
+void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+    INA219_BMS_I2C_MemRxCpltCallback(hi2c);
+}
+
+void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+    INA219_BMS_I2C_MemTxCpltCallback(hi2c);
+}
+
+void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
+{
+    INA219_BMS_I2C_ErrorCallback(hi2c);
 }
 
 
@@ -170,6 +221,8 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+
+
 
   /* USER CODE END 1 */
 
@@ -201,19 +254,31 @@ int main(void)
   MX_I2C1_Init();
   MX_USART6_UART_Init();
   MX_SPI1_Init();
-  MX_I2C2_Init();
-  MX_I2C3_Init();
-  MX_TIM1_Init();
-  MX_TIM4_Init();
-  MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
 
-  STMACHINE_Init();
-  HAL_TIM_Base_Start(&htim11);
 
-  Trace_Init();
+  /* ADC DMA는 app_bms init 전에 먼저 시작 */
+  if (HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adcValue, 2) != HAL_OK)
+  {
+      Error_Handler();
+  }
+
+  /* 기존 코드에서 TIM11 base start를 쓰고 있으니 일단 유지 */
+  if (HAL_TIM_Base_Start(&htim11) != HAL_OK)
+  {
+      Error_Handler();
+  }
+
+  /* 상위 통합 app 초기화 */
+  App_Bms_Init();
+
+
+
+
+
+
   Can_Init();
-//  LedApp_Init();
+
 
 
 
@@ -227,18 +292,25 @@ int main(void)
   {
 
 
-      Can_Task();
-//      LedApp_Task();
-      ST_MACHINE();
+	  App_Bms_Task();
 
-	  App_Charger_Task();
+//
+//	  BMS_SENSOR_Service();
+//	  BMS_SENSOR_Task();
+//	  BMS_SAFETY_Task();
+//	  ST_MACHINE();
+//	  SHOW_UART2_BMS();
+//	  SHOW_UART6_BMS();
+//
 
-//      if (ST_GetSolarFlag())
-//      {
-//    	  App_Charger_Task();
-//      }
 
-//      Trace_Mode(ST_GetTraceFlag() ? MODE_ACT : MODE_INIT);
+
+
+
+	  Can_Task();
+
+//	  UartApp_Task();
+
 
 
 
