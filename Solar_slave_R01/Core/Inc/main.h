@@ -57,10 +57,6 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define ADC_temp_Pin GPIO_PIN_2
-#define ADC_temp_GPIO_Port GPIOC
-#define ADC_gas_Pin GPIO_PIN_3
-#define ADC_gas_GPIO_Port GPIOC
 #define DC_PWM1_Pin GPIO_PIN_0
 #define DC_PWM1_GPIO_Port GPIOA
 #define DC_PWM2_Pin GPIO_PIN_1

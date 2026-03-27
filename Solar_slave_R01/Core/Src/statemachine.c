@@ -289,7 +289,7 @@ void STMACHINE_Init(void)
     HAL_UART_Receive_IT(&huart6, (uint8_t *)rxData, 1);
 
     /* ADC DMA 시작 */
-    HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adcValue, 6);
+    HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adcValue, 4);
 
 
 

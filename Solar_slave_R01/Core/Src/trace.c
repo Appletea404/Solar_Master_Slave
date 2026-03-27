@@ -85,7 +85,17 @@ const char* Trace_GetStateString(void)
 // 10개의 adc값을 모아서 개수만큼 나눈 평균값을 사용(노이즈 제거)
 void Sensor_Filter()
 {
-  for(uint8_t i = 2; i < 6; i++)
+
+
+//
+//	S1 = adcValue[4];
+//	S2 = adcValue[2];
+//	S3 = adcValue[5];
+//	S4 = adcValue[3];
+
+
+
+  for(uint8_t i = 0; i < 4; i++)
   {
     sum_array[i] -= sensor_buffer[i][filter_index]; // 이전 값 제거
     sensor_buffer[i][filter_index] = adcValue[i];   // 새 값 저장
@@ -95,21 +105,40 @@ void Sensor_Filter()
   filter_index++;
   if(filter_index >= FILTER_SIZE) filter_index = 0;
 
-  S1 = sum_array[2] / FILTER_SIZE;		//1
-  S2 = sum_array[3] / FILTER_SIZE;		//2
-  S3 = sum_array[4] / FILTER_SIZE;		//3
-  S4 = sum_array[5] / FILTER_SIZE;		//4
+
+
+
+//   S1 = sum_array[3] / FILTER_SIZE; 4
+//   S2 = sum_array[1] / FILTER_SIZE; 2
+//   S3 = sum_array[4] / FILTER_SIZE; 5
+//   S4 = sum_array[2] / FILTER_SIZE; 3
+
+
+
+  S1 = sum_array[0] / FILTER_SIZE;		//1
+  S2 = sum_array[1] / FILTER_SIZE;		//2
+  S3 = sum_array[2] / FILTER_SIZE;		//3
+  S4 = sum_array[3] / FILTER_SIZE;		//4
 }
 
 
 // 태양 방향 계산
 void Sun_Position()
 {
-  int left  = S1 + S3;
-  int right = S2 + S4;
+  int left  = S3 + S4;
+  int right = S1 + S2;
 
-  int top    = S1 + S2;
-  int bottom = S3 + S4;
+  int top    = S1 + S3;
+  int bottom = S2 + S4;
+
+
+
+// == 기존 == //
+//  int left  = S1 + S3;
+//  int right = S2 + S4;
+//
+//  int top    = S1 + S2;
+//  int bottom = S3 + S4;
 
   error_x = left - right;
   error_y = top - bottom;

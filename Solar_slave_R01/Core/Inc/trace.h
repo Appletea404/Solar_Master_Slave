@@ -16,7 +16,7 @@
 
 #define FILTER_SIZE 10
 // 좌우, 상하 오차 관련 변수(800미만시 상단이 정지하지 않고 조금씩 움직임)
-#define THRESHOLD 600
+#define THRESHOLD 800
 
 typedef enum {
   MODE_INIT,    // 태양 추적 초기화
