@@ -32,7 +32,6 @@
 
 
 #include "can.h"
-#include "led_app.h"
 #include "statemachine.h"
 #include "app_charger.h"
 
@@ -65,10 +64,10 @@ PUTCHAR_PROTOTYPE
     if (ch == '\n')
     {
         uint8_t cr = '\r';
-        HAL_UART_Transmit(&huart2, &cr, 1U, 0xFFFFU);
+        HAL_UART_Transmit(&huart6, &cr, 1U, 0xFFFFU);
     }
 
-    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1U, 0xFFFFU);
+    HAL_UART_Transmit(&huart6, (uint8_t *)&ch, 1U, 0xFFFFU);
     return ch;
 }
 
@@ -192,13 +191,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_USART1_UART_Init();
-  MX_TIM2_Init();
-  MX_TIM3_Init();
   MX_TIM11_Init();
-  MX_USART2_UART_Init();
   MX_ADC1_Init();
-  MX_I2C1_Init();
   MX_USART6_UART_Init();
   MX_SPI1_Init();
   MX_I2C2_Init();
@@ -213,7 +207,6 @@ int main(void)
 
   Trace_Init();
   Can_Init();
-//  LedApp_Init();
 
 
 
@@ -228,15 +221,7 @@ int main(void)
 
 
       Can_Task();
-//      LedApp_Task();
       ST_MACHINE();
-
-      if (ST_GetSolarFlag())
-      {
-    	  App_Charger_Task();
-      }
-
-      Trace_Mode(ST_GetTraceFlag() ? MODE_ACT : MODE_INIT);
 
 
 

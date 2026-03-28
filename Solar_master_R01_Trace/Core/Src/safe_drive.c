@@ -35,8 +35,6 @@
  * 내부 디버그용 마지막 값
  * ========================================================= */
 static uint8_t s_last_req_pct = 0U;
-static uint8_t s_last_applied_pct = 0U;
-static speed_state_t s_last_applied_speed = SPD_STOP;
 static uint8_t s_last_dir = (uint8_t)CAR_STOP;
 
 /* =========================================================
@@ -95,8 +93,6 @@ static speed_state_t SafeDrive_PctToSpeed(uint8_t pct)
 void SafeDrive_Stop(void)
 {
     s_last_req_pct = 0U;
-    s_last_applied_pct = 0U;
-    s_last_applied_speed = SPD_STOP;
     s_last_dir = (uint8_t)CAR_STOP;
 
     Car_Stop();
@@ -130,9 +126,6 @@ void SafeDrive_Move(uint8_t dir, speed_state_t req_speed)
     /* speed enum 구조에 맞게 5% 단위 정규화 */
     final_pct = SafeDrive_NormalizePct(final_pct);
     final_speed = SafeDrive_PctToSpeed(final_pct);
-
-    s_last_applied_pct = final_pct;
-    s_last_applied_speed = final_speed;
 
     /* 최종 적용 속도가 0이면 정지 */
     if (final_speed == SPD_STOP)
@@ -180,20 +173,3 @@ void SafeDrive_ReapplyLimit(void)
     SafeDrive_MovePct(s_last_dir, s_last_req_pct);
 }
 
-/* =========================================================
- * getter
- * ========================================================= */
-uint8_t SafeDrive_GetLastReqPct(void)
-{
-    return s_last_req_pct;
-}
-
-uint8_t SafeDrive_GetLastAppliedPct(void)
-{
-    return s_last_applied_pct;
-}
-
-speed_state_t SafeDrive_GetLastAppliedSpeed(void)
-{
-    return s_last_applied_speed;
-}

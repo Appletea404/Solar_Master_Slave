@@ -61,8 +61,7 @@ void ST_MACHINE();
 
 bool ST_GetSolarFlag(void);
 bool ST_GetTraceFlag(void);
-bool ST_GetForceFlag(void);
-const char* GetTraceString(void);
+bool ST_GetForceLock(void);
 
 
 
@@ -71,7 +70,6 @@ const char* GetTraceString(void);
 
 
 
-void SHOW_UART2_TRACE(void);
 void SHOW_UART6_TRACE(void);
 
 

@@ -82,19 +82,13 @@ void App_Charger_I2CErrorCallback(I2C_HandleTypeDef *hi2c);
 void App_Charger_UartTxCpltCallback(UART_HandleTypeDef *huart);
 void App_Charger_UartErrorCallback(UART_HandleTypeDef *huart);
 
-/* UART 상태 출력 (blocking), 1초 주기
+/* UART6 전체 상태 출력, 1초 주기 (non-blocking DMA)
  * ---------------------------------------------------------
- * SHOW_UART2_APP_CHARGER : printf  -> UART2 (debug 터미널)
- * SHOW_UART6_APP_CHARGER : UART6   -> BT/시리얼 모니터
- *
- * 출력 형식 (동일):
+ * 출력 형식:
  *   [HH:MM:SS] [STATE:...][MODE:...][FAULT:...]
  *   Vpv=V Ipv=mA Ppv=W | Vbat=V Ichg=mA Pchg=W |
- *   Eff=% SOC=% Duty=  | Iref=A Icc=A Icv=A Imppt=A
- *
- * 주의: blocking 방식이므로 while(1)에서 호출할 것
+ *   Eff=% SOC=% Duty=
  */
-void SHOW_UART2_APP_CHARGER(void);
 void SHOW_UART6_APP_CHARGER(void);
 
 #endif /* __APP_CHARGER_H */

@@ -48,46 +48,22 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, Ultra_Trig_C_Pin|Ultra_Trig_L_Pin|Ultra_Trig_R_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(CAN_CS_GPIO_Port, CAN_CS_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, DCMotor_in4_Pin|DCMotor_in2_Pin|DCMotor_in3_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(DCMotor_in1_GPIO_Port, DCMotor_in1_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pins : Ultra_Trig_C_Pin Ultra_Trig_L_Pin CAN_CS_Pin Ultra_Trig_R_Pin */
-  GPIO_InitStruct.Pin = Ultra_Trig_C_Pin|Ultra_Trig_L_Pin|CAN_CS_Pin|Ultra_Trig_R_Pin;
+  /*Configure GPIO pin : CAN_CS_Pin */
+  GPIO_InitStruct.Pin = CAN_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(CAN_CS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : CAN_INT_Pin */
   GPIO_InitStruct.Pin = CAN_INT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(CAN_INT_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : DCMotor_in4_Pin DCMotor_in2_Pin DCMotor_in3_Pin */
-  GPIO_InitStruct.Pin = DCMotor_in4_Pin|DCMotor_in2_Pin|DCMotor_in3_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : DCMotor_in1_Pin */
-  GPIO_InitStruct.Pin = DCMotor_in1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(DCMotor_in1_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);

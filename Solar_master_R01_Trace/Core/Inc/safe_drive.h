@@ -65,11 +65,5 @@ void SafeDrive_MovePct(uint8_t dir, uint8_t req_pct);
  */
 void SafeDrive_ReapplyLimit(void);
 
-/* =========================================================
- * 디버그 / 로그용 getter
- * ========================================================= */
-uint8_t SafeDrive_GetLastReqPct(void);
-uint8_t SafeDrive_GetLastAppliedPct(void);
-speed_state_t SafeDrive_GetLastAppliedSpeed(void);
 
 #endif /* INC_SAFE_DRIVE_H_ */

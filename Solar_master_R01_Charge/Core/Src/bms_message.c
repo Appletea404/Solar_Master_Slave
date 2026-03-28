@@ -5,14 +5,12 @@
 #include "app_bms.h"
 
 /* 외부 UART 핸들 */
-extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart6;
 
 /* =========================================================
  * 로그 설정
  * ========================================================= */
 #define BMS_UART_LOG_PERIOD_MS      1000U
-#define BMS_UART2_MSG_SIZE          256U
 #define BMS_UART6_MSG_SIZE          256U
 
 /* =========================================================
@@ -26,10 +24,8 @@ extern UART_HandleTypeDef huart6;
 /* =========================================================
  * DMA TX 버퍼 / busy flag
  * ========================================================= */
-static char uart2_msg[BMS_UART2_MSG_SIZE];
 static char uart6_msg[BMS_UART6_MSG_SIZE];
 
-static volatile uint8_t uart2_tx_busy = 0U;
 static volatile uint8_t uart6_tx_busy = 0U;
 
 /* =========================================================
@@ -265,11 +261,7 @@ static const char *BMS_MESSAGE_GetStateLine(void)
  * ========================================================= */
 void BMS_MESSAGE_UartTxCpltCallback(UART_HandleTypeDef *huart)
 {
-    if (huart == &huart2)
-    {
-        uart2_tx_busy = 0U;
-    }
-    else if (huart == &huart6)
+    if (huart == &huart6)
     {
         uart6_tx_busy = 0U;
     }
@@ -277,11 +269,7 @@ void BMS_MESSAGE_UartTxCpltCallback(UART_HandleTypeDef *huart)
 
 void BMS_MESSAGE_UartErrorCallback(UART_HandleTypeDef *huart)
 {
-    if (huart == &huart2)
-    {
-        uart2_tx_busy = 0U;
-    }
-    else if (huart == &huart6)
+    if (huart == &huart6)
     {
         uart6_tx_busy = 0U;
     }
@@ -292,36 +280,21 @@ void BMS_MESSAGE_UartErrorCallback(UART_HandleTypeDef *huart)
  * ========================================================= */
 static char *BMS_MESSAGE_GetTxBuf(UART_HandleTypeDef *huart, uint16_t *buf_size)
 {
-    if (huart == &huart2)
-    {
-        *buf_size = BMS_UART2_MSG_SIZE;
-        return uart2_msg;
-    }
-
+    (void)huart;
     *buf_size = BMS_UART6_MSG_SIZE;
     return uart6_msg;
 }
 
 static uint8_t BMS_MESSAGE_IsTxBusy(UART_HandleTypeDef *huart)
 {
-    if (huart == &huart2)
-    {
-        return uart2_tx_busy;
-    }
-
+    (void)huart;
     return uart6_tx_busy;
 }
 
 static void BMS_MESSAGE_SetTxBusy(UART_HandleTypeDef *huart, uint8_t busy)
 {
-    if (huart == &huart2)
-    {
-        uart2_tx_busy = busy;
-    }
-    else if (huart == &huart6)
-    {
-        uart6_tx_busy = busy;
-    }
+    (void)huart;
+    uart6_tx_busy = busy;
 }
 
 /* =========================================================
@@ -433,12 +406,6 @@ static void SEND_BMS_STATUS(UART_HandleTypeDef *huart, uint32_t *prev_time)
     {
         BMS_MESSAGE_SetTxBusy(huart, 0U);
     }
-}
-
-void SHOW_UART2_BMS(void)
-{
-    static uint32_t prev_time_uart2 = 0U;
-    SEND_BMS_STATUS(&huart2, &prev_time_uart2);
 }
 
 void SHOW_UART6_BMS(void)

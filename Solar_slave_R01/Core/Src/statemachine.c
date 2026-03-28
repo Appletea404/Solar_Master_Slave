@@ -52,7 +52,7 @@ static volatile bool bt6Flag = 0;
 static uint8_t rxCmd = 0;
 
 /* ADC value */
-uint16_t adcValue[6];
+uint16_t adcValue[4];
 
 /* =========================================================
  * 내부 helper
@@ -337,31 +337,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     }
 }
 
-/* =========================================================
- * UART2 DEBUG
- * ========================================================= */
-void SHOW_UART2_TRACE(void)
-{
-    static uint32_t trace_uart_prevTick = 0;
-    uint32_t now = HAL_GetTick();
-
-    if ((now - trace_uart_prevTick) < 500U)
-    {
-        return;
-    }
-
-    trace_uart_prevTick = now;
-
-    printf("[TRACE] ADC:%d|%d|%d|%d  X:%d|Y:%d\r\n",
-           S1, S2, S3, S4, error_x, error_y);
-
-    printf("[ST] TRACE:%s SOLAR:%s FORCE:%s AUTO:%s\r\n",
-           trace_flag ? "ON" : "OFF",
-           solar_flag ? "ON" : "OFF",
-           force_lock ? "ON" : "OFF",
-           auto_drive ? "ON" : "OFF");
-}
-
 void SHOW_UART6_TRACE(void)
 {
     static uint32_t trace_uart6_prevTick = 0;
@@ -396,11 +371,6 @@ void SHOW_UART6_TRACE(void)
 /* =========================================================
  * getter
  * ========================================================= */
-const char *GetTraceString(void)
-{
-    return Trace_GetStateString();
-}
-
 bool ST_GetSolarFlag(void)
 {
     return solar_flag;
@@ -424,7 +394,7 @@ void ST_MACHINE(void)
     CanFrame_t rx;
 
     /* -----------------------------------------------------
-     * UART6 local test
+     * UART6 local test (보험용 문자열 터미널 수동으로 쏘면 반응)
      * ----------------------------------------------------- */
     if (bt6Flag == 1)
     {
@@ -443,8 +413,17 @@ void ST_MACHINE(void)
         }
     }
 
+    // 충전 On/Off
+    if (solar_flag)
+    {
+        App_Charger_Task();
+    }
+
+    // 태양추적 On/Off
+    Trace_Mode(trace_flag ? MODE_ACT : MODE_INIT);
+
     /* 디버그 출력 */
-    SHOW_UART6_TRACE();
-//    SHOW_UART6_APP_CHARGER();
+//    SHOW_UART6_TRACE();
+    SHOW_UART6_APP_CHARGER();
 }
 

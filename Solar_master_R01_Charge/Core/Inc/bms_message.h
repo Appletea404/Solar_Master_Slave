@@ -17,7 +17,6 @@
 #include "bms_sensor.h"
 #include "bms_safety_manager.h"
 
-void SHOW_UART2_BMS(void);
 void SHOW_UART6_BMS(void);
 
 /* 전역 HAL UART callback에서 라우팅용으로 호출 */

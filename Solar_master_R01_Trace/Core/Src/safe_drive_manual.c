@@ -32,62 +32,45 @@
 #include "speed.h"
 
 /* =========================================================
- * 내부 디버그 값
- * ========================================================= */
-static uint8_t s_last_cmd = 0U;
-static uint8_t s_last_req_pct = 0U;
-
-/* =========================================================
  * 수동 명령 처리
  * ========================================================= */
 uint8_t SafeDriveManual_HandleCmd(uint8_t cmd)
 {
-    s_last_cmd = cmd;
-
     switch (cmd)
     {
         case 'F':
-            s_last_req_pct = 100U;
             SafeDrive_Move(CAR_FRONT, SPD_100);
             return 1U;
 
         case 'Q':
-            s_last_req_pct = 50U;
             SafeDrive_Move(CAR_FRONT, SPD_50);
             return 1U;
 
         case 'B':
-            s_last_req_pct = 100U;
             SafeDrive_Move(CAR_BACK, SPD_100);
             return 1U;
 
         case 'W':
-            s_last_req_pct = 50U;
             SafeDrive_Move(CAR_BACK, SPD_50);
             return 1U;
 
         case 'L':
-            s_last_req_pct = 100U;
             SafeDrive_Move(CAR_LEFT, SPD_100);
             return 1U;
 
         case 'E':
-            s_last_req_pct = 50U;
             SafeDrive_Move(CAR_LEFT, SPD_50);
             return 1U;
 
         case 'R':
-            s_last_req_pct = 100U;
             SafeDrive_Move(CAR_RIGHT, SPD_100);
             return 1U;
 
         case 'T':
-            s_last_req_pct = 50U;
             SafeDrive_Move(CAR_RIGHT, SPD_50);
             return 1U;
 
         case 'S':
-            s_last_req_pct = 0U;
             SafeDrive_Stop();
             return 1U;
 
@@ -96,23 +79,3 @@ uint8_t SafeDriveManual_HandleCmd(uint8_t cmd)
             return 0U;
     }
 }
-
-/* =========================================================
- * getter
- * ========================================================= */
-uint8_t SafeDriveManual_GetLastCmd(void)
-{
-    return s_last_cmd;
-}
-
-uint8_t SafeDriveManual_GetLastReqPct(void)
-{
-    return s_last_req_pct;
-}
-
-
-
-
-
-
-

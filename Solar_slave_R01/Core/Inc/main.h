@@ -57,37 +57,15 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define DC_PWM1_Pin GPIO_PIN_0
-#define DC_PWM1_GPIO_Port GPIOA
-#define DC_PWM2_Pin GPIO_PIN_1
-#define DC_PWM2_GPIO_Port GPIOA
-#define Ultra_Trig_C_Pin GPIO_PIN_1
-#define Ultra_Trig_C_GPIO_Port GPIOB
-#define Ultra_Trig_L_Pin GPIO_PIN_2
-#define Ultra_Trig_L_GPIO_Port GPIOB
 #define CAN_CS_Pin GPIO_PIN_12
 #define CAN_CS_GPIO_Port GPIOB
-#define Ultra_Trig_R_Pin GPIO_PIN_15
-#define Ultra_Trig_R_GPIO_Port GPIOB
-#define Ultra_ECHO_Right_Pin GPIO_PIN_6
-#define Ultra_ECHO_Right_GPIO_Port GPIOC
 #define CAN_INT_Pin GPIO_PIN_7
 #define CAN_INT_GPIO_Port GPIOC
 #define CAN_INT_EXTI_IRQn EXTI9_5_IRQn
-#define Ultra_ECHO_Left_Pin GPIO_PIN_9
-#define Ultra_ECHO_Left_GPIO_Port GPIOC
 #define PMW_trace1_Pin GPIO_PIN_9
 #define PMW_trace1_GPIO_Port GPIOA
 #define PWM_trace2_Pin GPIO_PIN_10
 #define PWM_trace2_GPIO_Port GPIOA
-#define DCMotor_in4_Pin GPIO_PIN_10
-#define DCMotor_in4_GPIO_Port GPIOC
-#define DCMotor_in2_Pin GPIO_PIN_11
-#define DCMotor_in2_GPIO_Port GPIOC
-#define DCMotor_in3_Pin GPIO_PIN_12
-#define DCMotor_in3_GPIO_Port GPIOC
-#define DCMotor_in1_Pin GPIO_PIN_2
-#define DCMotor_in1_GPIO_Port GPIOD
 #define PWM_MPPT_Pin GPIO_PIN_6
 #define PWM_MPPT_GPIO_Port GPIOB
 

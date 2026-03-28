@@ -75,24 +75,6 @@
 
 
 
-//#ifdef __GNUC__
-//#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
-//#else
-//#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
-//#endif
-//
-//PUTCHAR_PROTOTYPE
-//{
-//    if (ch == '\n')
-//    {
-//        uint8_t cr = '\r';
-//        HAL_UART_Transmit(&huart2, &cr, 1U, 0xFFFFU);
-//    }
-//
-//    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1U, 0xFFFFU);
-//    return ch;
-//}
-//
 
 
 
@@ -103,9 +85,6 @@
 
 /* USER CODE BEGIN PV */
 
-
-// Moserial buff
-//static uint8_t uart2_rx_byte = 0U;
 
 volatile uint16_t adcValue[2] = {0U, 0U};
 
@@ -118,8 +97,6 @@ void SystemClock_Config(void);
 
 
 
-//static const char *Temp_StateStr(TEMP_STATE st);
-//
 
 
 /* USER CODE END PFP */
@@ -170,12 +147,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     /* UART1 기존 리모컨 경로 */
     STMACHINE_UartRxCpltCallback(huart);
 
-    /* UART2 moserial 입력 -> UART1과 같은 명령 경로 */
-//    if (huart->Instance == USART2)
-//    {
-////        STMACHINE_SubmitCmd(uart2_rx_byte);
-////        HAL_UART_Receive_IT(&huart2, &uart2_rx_byte, 1U);
-//    }
 }
 
 
@@ -249,7 +220,6 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM11_Init();
-  MX_USART2_UART_Init();
   MX_ADC1_Init();
   MX_I2C1_Init();
   MX_USART6_UART_Init();
@@ -294,25 +264,8 @@ int main(void)
 
 	  App_Bms_Task();
 
-//
-//	  BMS_SENSOR_Service();
-//	  BMS_SENSOR_Task();
-//	  BMS_SAFETY_Task();
-//	  ST_MACHINE();
-//	  SHOW_UART2_BMS();
-//	  SHOW_UART6_BMS();
-//
-
-
-
-
 
 	  Can_Task();
-
-//	  UartApp_Task();
-
-
-
 
     /* USER CODE END WHILE */
 

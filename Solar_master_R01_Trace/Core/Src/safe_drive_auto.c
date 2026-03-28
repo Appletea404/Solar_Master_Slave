@@ -235,10 +235,3 @@ void SafeDriveAuto_Task(void)
     }
 }
 
-/* =========================================================
- * getter
- * ========================================================= */
-AUTO_STATE SafeDriveAuto_GetState(void)
-{
-    return auto_st;
-}

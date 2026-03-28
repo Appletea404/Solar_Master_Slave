@@ -24,9 +24,8 @@ typedef enum {
 } Mode;
 
 extern Mode mode;
-extern bool initflag;
 
-extern uint16_t adcValue[6];
+extern uint16_t adcValue[4];
 extern uint16_t S1,S2,S3,S4;
 
 extern int error_x;
@@ -37,15 +36,6 @@ extern int error_y;
 void Trace_ForceInit(void);
 void Trace_Mode(uint8_t mode);
 void Trace_Init();
-void Trace_RequestToggle(void);
-
-
-void Trace_Task(uint8_t is_manual,
-                uint8_t is_auto,
-                uint8_t actual_speed,
-                uint8_t warning_count,
-                uint8_t has_danger,
-                uint8_t danger_latched);
 
 const char* Trace_GetStateString(void);
 

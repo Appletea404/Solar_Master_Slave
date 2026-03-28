@@ -18,9 +18,7 @@
 #include "bms_safety_manager.h"
 #include "ultrasonic.h"
 
-void SHOW_UART2_BMS(void);
 void SHOW_UART6_BMS(void);
-void SHOW_UART6_ULTRASONIC(void);  /* 초음파 거리 테스트용 - 호출부 주석 해제 후 사용 */
 
 /* 전역 HAL UART callback에서 라우팅용으로 호출 */
 void BMS_MESSAGE_UartTxCpltCallback(UART_HandleTypeDef *huart);

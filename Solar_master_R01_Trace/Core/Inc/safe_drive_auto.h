@@ -42,9 +42,5 @@ typedef enum
 void SafeDriveAuto_Init(void);
 void SafeDriveAuto_Task(void);
 
-/* =========================================================
- * 상태 조회
- * ========================================================= */
-AUTO_STATE SafeDriveAuto_GetState(void);
 
 #endif /* INC_SAFE_DRIVE_AUTO_H_ */

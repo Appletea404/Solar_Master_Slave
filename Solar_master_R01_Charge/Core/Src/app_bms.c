@@ -47,11 +47,7 @@
 
 /* =========================================================
  * 로그 설정
- * ---------------------------------------------------------
- * UART2는 moserial 입력 용도로도 쓸 수 있으므로 기본 OFF 권장
- * UART6는 상태 로그 확인용으로 사용
  * ========================================================= */
-#define APP_BMS_USE_UART2_LOG              0U
 #define APP_BMS_USE_UART6_LOG              1U
 
 /* =========================================================
@@ -454,32 +450,12 @@ void App_Bms_Init(void)
     g_app_bms.init_done = 1U;
 }
 
-/* 연습용 */
-#define APP_BMS_TEST_INJECT_ENABLE   0
-
 void App_Bms_Task(void)
 {
-#if (APP_BMS_TEST_INJECT_ENABLE == 1)
-    static uint8_t test_done = 0U;
-#endif
-
     if (App_Bms_IsReady() == 0U)
     {
         return;
     }
-
-#if (APP_BMS_TEST_INJECT_ENABLE == 1)
-    if (test_done == 0U)
-    {
-        test_done = 1U;
-
-        /* 여기 문자만 바꿔가며 테스트 */
-        App_Bms_NotifyRemoteCmd('D');
-        /* App_Bms_NotifyRemoteCmd('K'); */
-        /* App_Bms_NotifyRemoteCmd('P'); */
-        /* App_Bms_NotifyRemoteCmd('A'); */
-    }
-#endif
 
     /* 1) non-blocking sensor service */
     BMS_SENSOR_Service();
@@ -521,10 +497,6 @@ void App_Bms_Task(void)
     App_Bms_ProcessCanPending();
 
     /* 6) 로그 */
-#if (APP_BMS_USE_UART2_LOG == 1U)
-    SHOW_UART2_BMS();
-#endif
-
 #if (APP_BMS_USE_UART6_LOG == 1U)
     SHOW_UART6_BMS();
 #endif
@@ -718,23 +690,4 @@ uint8_t App_Bms_GetAppliedLimitPct(void)
     }
 
     return BMS_SAFETY_GetAppliedLimitPct();
-}
-
-const char *App_Bms_GetBanner(void)
-{
-    if (App_Bms_IsReady() == 0U)
-    {
-        return "BMS_NOT_INIT";
-    }
-
-    if (g_app_bms.force_stop_lock != 0U)
-    {
-        if (g_app_bms.danger_auto_stopped != 0U)
-        {
-            return "DANGER_AUTO_STOP";
-        }
-        return "FORCE_STOP";
-    }
-
-    return BMS_SAFETY_GetBanner();
 }

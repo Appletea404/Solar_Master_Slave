@@ -27,31 +27,16 @@
 #include "dma.h"
 #include <stdio.h>
 #include <string.h>
-#include <stdarg.h>
 
 /* =========================================================
  * 내부 주기 설정
  * ========================================================= */
 #define APP_CHARGER_CONTROL_PERIOD_MS          10U
-#define APP_CHARGER_DEBUG_PERIOD_MS           500U
 
 /* =========================================================
  * pending backlog 제한
- * ---------------------------------------------------------
- * 실시간 제어에서는 backlog를 무한정 쌓는 것보다
- * 일정 개수까지만 허용하는 편이 더 안전하다.
  * ========================================================= */
 #define APP_CHARGER_MAX_PENDING_CTRL            5U
-#define APP_CHARGER_MAX_PENDING_DBG             2U
-
-/* =========================================================
- * UART2 DMA 로그 큐 설정
- * ---------------------------------------------------------
- * 초기화 로그 + 상태 로그 2~3줄을 고려해
- * 이전 버전보다 큐와 길이를 조금 더 여유 있게 잡는다.
- * ========================================================= */
-#define APP_CHARGER_LOG_QUEUE_SIZE             16U
-#define APP_CHARGER_LOG_MAX_LEN               384U
 
 /* =========================================================
  * 내부 전역 객체
@@ -67,273 +52,41 @@ static uint8_t g_batt_init_ok  = 0U;
 
 /* =========================================================
  * 내부 pending counter
- * ---------------------------------------------------------
- * 1ms tick ISR에서 증가시키고
- * main task에서 감소시키며 소비한다.
  * ========================================================= */
 static volatile uint16_t g_pending_ctrl_10ms = 0U;
-static volatile uint16_t g_pending_dbg_500ms = 0U;
-
-/* =========================================================
- * UART2 DMA 로그 큐
- * ========================================================= */
-static volatile uint8_t  g_uart2_tx_busy   = 0U;
-static volatile uint8_t  g_log_queue_head  = 0U;
-static volatile uint8_t  g_log_queue_tail  = 0U;
-static volatile uint8_t  g_log_queue_count = 0U;
-static volatile uint32_t g_log_drop_count  = 0U;
-
-static char     g_log_queue[APP_CHARGER_LOG_QUEUE_SIZE][APP_CHARGER_LOG_MAX_LEN];
-static uint16_t g_log_len[APP_CHARGER_LOG_QUEUE_SIZE];
 
 /* =========================================================
  * 내부 함수 선언
  * ========================================================= */
-static uint16_t AppCharger_Strnlen(const char *str, uint16_t max_len);
-static void AppCharger_UartTryStartTx(void);
 static void AppCharger_LogPrintf(const char *fmt, ...);
-
 static void AppCharger_ApplyDuty(float duty);
 static void AppCharger_PrintI2CError(const char *tag, I2C_HandleTypeDef *hi2c);
 static void AppCharger_I2CScanBus(I2C_HandleTypeDef *hi2c, const char *bus_name);
-static void AppCharger_PrintStatus(void);
 
 /* =========================================================
- * 내부용 안전 길이 계산
- * ========================================================= */
-static uint16_t AppCharger_Strnlen(const char *str, uint16_t max_len)
-{
-    uint16_t len = 0U;
-
-    if (str == NULL)
-    {
-        return 0U;
-    }
-
-    while ((len < max_len) && (str[len] != '\0'))
-    {
-        len++;
-    }
-
-    return len;
-}
-
-
-/* =========================================================
- * [STATE] 로그용 시간 prefix 생성
- * ---------------------------------------------------------
- * HAL_GetTick() 기준 부팅 후 경과 시간을
- * [MM:SS.mmm] 형태 문자열로 만든다.
- *
- * 예)
- *   [00:12.345]
- *   [03:05.027]
- *
- * 주의:
- * - 분은 0~99까지만 2자리로 표시한다.
- * - 100분 이상 경과 시에도 00~99 범위로 순환 표시된다.
- *   필요하면 나중에 시:분:초 형태로 확장 가능하다.
- * ========================================================= */
-static void AppCharger_GetTimePrefix(char *buf, uint16_t buf_len)
-{
-    uint32_t tick_ms;
-    uint32_t total_sec;
-    uint32_t min;
-    uint32_t sec;
-    uint32_t msec;
-
-    if ((buf == NULL) || (buf_len == 0U))
-    {
-        return;
-    }
-
-    tick_ms = HAL_GetTick();
-
-    total_sec = tick_ms / 1000U;
-    min  = (total_sec / 60U) % 100U;
-    sec  = total_sec % 60U;
-    msec = tick_ms % 1000U;
-
-    (void)snprintf(buf,
-                   buf_len,
-                   "[%02lu:%02lu.%03lu]",
-                   (unsigned long)min,
-                   (unsigned long)sec,
-                   (unsigned long)msec);
-}
-
-
-/* =========================================================
- * UART 송신 시작
- * ---------------------------------------------------------
- * 큐에 데이터가 있고 UART2 DMA가 idle이면
- * tail 슬롯을 즉시 송신 시작한다.
- * ========================================================= */
-static void AppCharger_UartTryStartTx(void)
-{
-    HAL_StatusTypeDef st;
-    uint8_t slot_index;
-    uint16_t tx_len;
-
-    __disable_irq();
-
-    if ((g_uart2_tx_busy != 0U) || (g_log_queue_count == 0U))
-    {
-        __enable_irq();
-        return;
-    }
-
-    g_uart2_tx_busy = 1U;
-    slot_index = g_log_queue_tail;
-    tx_len = g_log_len[slot_index];
-
-    __enable_irq();
-
-    st = HAL_UART_Transmit_DMA(&huart2,
-                               (uint8_t *)g_log_queue[slot_index],
-                               tx_len);
-
-    if (st != HAL_OK)
-    {
-        __disable_irq();
-        g_uart2_tx_busy = 0U;
-        __enable_irq();
-    }
-}
-
-/* =========================================================
- * 내부 printf helper
- * ========================================================= */
-static void AppCharger_LogPrintf(const char *fmt, ...)
-{
-    /* static: 384바이트를 스택 대신 BSS에 배치 — 스택 오버플로우 방지
-     * AppCharger_LogPrintf는 ISR에서 호출되지 않으므로 재진입 문제 없음 */
-    static char buf[APP_CHARGER_LOG_MAX_LEN];
-    va_list ap;
-
-    va_start(ap, fmt);
-    (void)vsnprintf(buf, sizeof(buf), fmt, ap);
-    va_end(ap);
-
-    App_Charger_LogString(buf);
-}
-
-/* =========================================================
- * UART2 DMA 기반 논블로킹 로그 송신
+ * 로그 출력 stub (UART2 제거됨 — 출력 비활성)
  * ========================================================= */
 void App_Charger_LogString(const char *str)
 {
-    uint16_t len;
-    uint8_t slot_index;
-    uint8_t need_kick = 0U;
+    (void)str;
+}
 
-    if (str == NULL)
-    {
-        return;
-    }
-
-    len = AppCharger_Strnlen(str, (uint16_t)(APP_CHARGER_LOG_MAX_LEN - 1U));
-    if (len == 0U)
-    {
-        return;
-    }
-
-    __disable_irq();
-
-    if (g_log_queue_count >= APP_CHARGER_LOG_QUEUE_SIZE)
-    {
-        g_log_drop_count++;
-        __enable_irq();
-        return;
-    }
-
-    slot_index = g_log_queue_head;
-
-    memcpy((void *)g_log_queue[slot_index], str, len);
-    g_log_queue[slot_index][len] = '\0';
-    g_log_len[slot_index] = len;
-
-    g_log_queue_head++;
-    if (g_log_queue_head >= APP_CHARGER_LOG_QUEUE_SIZE)
-    {
-        g_log_queue_head = 0U;
-    }
-
-    g_log_queue_count++;
-
-    if (g_uart2_tx_busy == 0U)
-    {
-        need_kick = 1U;
-    }
-
-    __enable_irq();
-
-    if (need_kick != 0U)
-    {
-        AppCharger_UartTryStartTx();
-    }
+static void AppCharger_LogPrintf(const char *fmt, ...)
+{
+    (void)fmt;
 }
 
 /* =========================================================
- * UART DMA 송신 완료 callback 라우터
+ * UART callback stub (UART2 제거됨)
  * ========================================================= */
 void App_Charger_UartTxCpltCallback(UART_HandleTypeDef *huart)
 {
-    if (huart != &huart2)
-    {
-        return;
-    }
-
-    __disable_irq();
-
-    if (g_log_queue_count > 0U)
-    {
-        g_log_queue_tail++;
-        if (g_log_queue_tail >= APP_CHARGER_LOG_QUEUE_SIZE)
-        {
-            g_log_queue_tail = 0U;
-        }
-
-        g_log_queue_count--;
-    }
-
-    g_uart2_tx_busy = 0U;
-
-    __enable_irq();
-
-    AppCharger_UartTryStartTx();
+    (void)huart;
 }
 
-/* =========================================================
- * UART DMA 에러 callback 라우터
- * ---------------------------------------------------------
- * 현재 슬롯을 버리고 다음 로그부터 재시도한다.
- * ========================================================= */
 void App_Charger_UartErrorCallback(UART_HandleTypeDef *huart)
 {
-    if (huart != &huart2)
-    {
-        return;
-    }
-
-    __disable_irq();
-
-    if (g_log_queue_count > 0U)
-    {
-        g_log_queue_tail++;
-        if (g_log_queue_tail >= APP_CHARGER_LOG_QUEUE_SIZE)
-        {
-            g_log_queue_tail = 0U;
-        }
-
-        g_log_queue_count--;
-    }
-
-    g_uart2_tx_busy = 0U;
-
-    __enable_irq();
-
-    AppCharger_UartTryStartTx();
+    (void)huart;
 }
 
 /* =========================================================
@@ -412,97 +165,6 @@ static void AppCharger_I2CScanBus(I2C_HandleTypeDef *hi2c, const char *bus_name)
 }
 
 /* =========================================================
- * 상태 로그 출력
- * ---------------------------------------------------------
- * 1) 메인 충전 상태
- * 2) battery filter / range / status 디버그
- * 3) sample age / debounce / active fault 디버그
- *
- * 주의:
- * - 현재 solar_sensing 구조에서는 cnvr / ovf를 제거했으므로
- *   더 이상 출력하지 않는다.
- * ========================================================= */
-static void AppCharger_PrintStatus(void)
-{
-    SolarSensingDebug_t batt_dbg;
-    char time_prefix[16];
-
-    SolarSensing_GetDebug(&g_batt_sensor, &batt_dbg);
-
-    /* 시간 문자열 생성 */
-    AppCharger_GetTimePrefix(time_prefix, (uint16_t)sizeof(time_prefix));
-
-    AppCharger_LogPrintf(
-        "%s [STATE:%s][MODE:%s][FAULT:%s] "
-        "Vpv=%.3fV Ipv=%.1fmA Ppv=%.3fW | "
-        "Vbat_bus=%.3fV Vbat=%.3fV Ichg=%.1fmA Pchg=%.3fW | "
-        "Eff=%.1f%% SOC=%.1f%% Duty=%.3f | "
-        "Iref=%.3fA Icc=%.3fA Icv=%.3fA Imppt=%.3fA\r\n",
-        time_prefix, ChargerState_StateString(g_charger.state),
-        SolarPiControl_ModeString(g_charger.control_mode_last),
-        ChargerState_PrimaryFaultString(g_charger.fault_flags),
-
-        g_charger.solar_src_v_last,
-        g_charger.solar_i_last * 1000.0f,
-        g_charger.solar_p_last,
-
-        g_charger.batt_bus_v_last,
-        g_charger.batt_v_last,
-        g_charger.batt_i_last * 1000.0f,
-        g_charger.batt_p_last,
-
-        g_charger.eff_last,
-        g_charger.soc_last,
-        g_charger.duty_last,
-
-        g_charger.i_ref_last,
-        g_charger.i_cc_last,
-        g_charger.i_cv_last,
-        g_charger.i_mppt_last);
-
-    AppCharger_LogPrintf(
-        "[BATTDBG] raw_bus=%.3fV raw_src=%.3fV filt_v=%.3fV out_v=%.3fV "
-        "raw_i=%.1fmA filt_i=%.1fmA out_i=%.1fmA | "
-        "init=%u inv=%u val=%u range=%u st=%lu err=0x%08lX drop=%lu\r\n",
-        batt_dbg.raw_bus_v,
-        batt_dbg.raw_source_v,
-        batt_dbg.filt_v,
-        batt_dbg.out_bus_v,
-
-        batt_dbg.raw_current_ma,
-        batt_dbg.filt_i,
-        batt_dbg.out_current_ma,
-
-        (unsigned int)batt_dbg.filter_initialized,
-        (unsigned int)batt_dbg.invalid_count,
-        (unsigned int)batt_dbg.valid_count,
-        (unsigned int)batt_dbg.range_valid,
-        (unsigned long)batt_dbg.last_status,
-        (unsigned long)batt_dbg.last_i2c_error,
-        (unsigned long)g_log_drop_count);
-
-    AppCharger_LogPrintf(
-        "[SNSDBG] s_age=%lums b_age=%lums | "
-        "s_comm=%u b_comm=%u s_rng=%u b_rng=%u | "
-        "s_cf=%u b_cf=%u s_rf=%u b_rf=%u | "
-        "fault=0x%08lX\r\n",
-        (unsigned long)g_charger.solar_sample_age_ms,
-        (unsigned long)g_charger.batt_sample_age_ms,
-
-        (unsigned int)g_charger.solar_comm_ok,
-        (unsigned int)g_charger.batt_comm_ok,
-        (unsigned int)g_charger.solar_range_ok,
-        (unsigned int)g_charger.batt_range_ok,
-
-        (unsigned int)g_charger.solar_comm_fault_active,
-        (unsigned int)g_charger.batt_comm_fault_active,
-        (unsigned int)g_charger.solar_range_fault_active,
-        (unsigned int)g_charger.batt_range_fault_active,
-
-        (unsigned long)g_charger.fault_flags);
-}
-
-/* =========================================================
  * App_Charger_HwInit
  * ---------------------------------------------------------
  * 보드 전원 인가 후 1회만 호출한다.
@@ -526,16 +188,6 @@ void App_Charger_HwInit(void)
     HAL_StatusTypeDef st_batt;
 
     g_pending_ctrl_10ms = 0U;
-    g_pending_dbg_500ms = 0U;
-
-    g_uart2_tx_busy   = 0U;
-    g_log_queue_head  = 0U;
-    g_log_queue_tail  = 0U;
-    g_log_queue_count = 0U;
-    g_log_drop_count  = 0U;
-
-    memset((void *)g_log_queue, 0, sizeof(g_log_queue));
-    memset((void *)g_log_len,   0, sizeof(g_log_len));
 
     st_pwm = HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
     if (st_pwm != HAL_OK)
@@ -638,16 +290,6 @@ void App_Charger_HwInit(void)
 void App_Charger_Init(void)
 {
     g_pending_ctrl_10ms = 0U;
-    g_pending_dbg_500ms = 0U;
-
-    g_uart2_tx_busy   = 0U;
-    g_log_queue_head  = 0U;
-    g_log_queue_tail  = 0U;
-    g_log_queue_count = 0U;
-    g_log_drop_count  = 0U;
-
-    memset((void *)g_log_queue, 0, sizeof(g_log_queue));
-    memset((void *)g_log_len,   0, sizeof(g_log_len));
 
     /* duty 강제 0 */
     AppCharger_ApplyDuty(0.0f);
@@ -686,9 +328,6 @@ void App_Charger_Stop(void)
 void App_Charger_Task(void)
 {
     uint8_t run_ctrl = 0U;
-    uint8_t run_dbg = 0U;
-
-    AppCharger_UartTryStartTx();
 
     __disable_irq();
     if (g_pending_ctrl_10ms > 0U)
@@ -703,24 +342,6 @@ void App_Charger_Task(void)
         ChargerState_Run(&g_charger);
         AppCharger_ApplyDuty(g_charger.duty_last);
     }
-
-    /* debug 출력은 control backlog가 없을 때만 수행 */
-    __disable_irq();
-    if ((g_pending_dbg_500ms > 0U) && (g_pending_ctrl_10ms == 0U))
-    {
-        g_pending_dbg_500ms--;
-        run_dbg = 1U;
-    }
-    __enable_irq();
-
-    if (run_dbg != 0U)
-    {
-        /* AppCharger_PrintStatus: vsnprintf float 인수 14개 + ISR 중첩으로
-         * 스택 오버플로우 → Hard Fault 유발. UART6(SHOW_UART6_APP_CHARGER)으로
-         * 충분히 모니터링 가능하므로 UART2 debug print 생략. */
-    }
-
-    AppCharger_UartTryStartTx();
 }
 
 /* =========================================================
@@ -731,7 +352,6 @@ void App_Charger_Task(void)
 void App_Charger_Tick1ms(void)
 {
     static uint16_t cnt_ctrl = 0U;
-    static uint16_t cnt_dbg  = 0U;
 
     cnt_ctrl++;
     if (cnt_ctrl >= APP_CHARGER_CONTROL_PERIOD_MS)
@@ -741,17 +361,6 @@ void App_Charger_Tick1ms(void)
         if (g_pending_ctrl_10ms < APP_CHARGER_MAX_PENDING_CTRL)
         {
             g_pending_ctrl_10ms++;
-        }
-    }
-
-    cnt_dbg++;
-    if (cnt_dbg >= APP_CHARGER_DEBUG_PERIOD_MS)
-    {
-        cnt_dbg = 0U;
-
-        if (g_pending_dbg_500ms < APP_CHARGER_MAX_PENDING_DBG)
-        {
-            g_pending_dbg_500ms++;
         }
     }
 }
@@ -768,54 +377,6 @@ void App_Charger_I2CMemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 void App_Charger_I2CErrorCallback(I2C_HandleTypeDef *hi2c)
 {
     SolarSensing_I2C_ErrorCallback(hi2c);
-}
-
-/* =========================================================
- * SHOW_UART2_APP_CHARGER
- * ---------------------------------------------------------
- * 1초 주기, printf(UART2 blocking) 전체 상태 출력
- * 형식:
- *   [HH:MM:SS] [STATE:...][MODE:...][FAULT:...]
- *   Vpv=V Ipv=mA Ppv=W | Vbat=V Ichg=mA Pchg=W |
- *   Eff=% SOC=% Duty=  | Iref=A Icc=A Icv=A Imppt=A
- * ========================================================= */
-void SHOW_UART2_APP_CHARGER(void)
-{
-    static uint32_t prev_tick = 0U;
-    uint32_t now = HAL_GetTick();
-    uint32_t total_sec;
-    uint32_t hh, mm, ss;
-
-    if ((now - prev_tick) < 1000U) return;
-    prev_tick = now;
-
-    total_sec = now / 1000U;
-    hh = (total_sec / 3600U) % 100U;
-    mm = (total_sec /   60U) %  60U;
-    ss =  total_sec          %  60U;
-
-    printf("[%02lu:%02lu:%02lu] [STATE:%s][MODE:%s][FAULT:%s] "
-           "Vpv=%.3fV Ipv=%.1fmA Ppv=%.3fW | "
-           "Vbat=%.3fV Ichg=%.1fmA Pchg=%.3fW | "
-           "Eff=%.1f%% SOC=%.1f%% Duty=%.3f | "
-           "Iref=%.3fA Icc=%.3fA Icv=%.3fA Imppt=%.3fA\r\n",
-           (unsigned long)hh, (unsigned long)mm, (unsigned long)ss,
-           ChargerState_StateString(g_charger.state),
-           SolarPiControl_ModeString(g_charger.control_mode_last),
-           ChargerState_PrimaryFaultString(g_charger.fault_flags),
-           g_charger.solar_src_v_last,
-           g_charger.solar_i_last   * 1000.0f,
-           g_charger.solar_p_last,
-           g_charger.batt_v_last,
-           g_charger.batt_i_last    * 1000.0f,
-           g_charger.batt_p_last,
-           g_charger.eff_last,
-           g_charger.soc_last,
-           g_charger.duty_last,
-           g_charger.i_ref_last,
-           g_charger.i_cc_last,
-           g_charger.i_cv_last,
-           g_charger.i_mppt_last);
 }
 
 /* =========================================================

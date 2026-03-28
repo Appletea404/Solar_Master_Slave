@@ -33,11 +33,6 @@
  * ========================================================= */
 uint8_t SafeDriveManual_HandleCmd(uint8_t cmd);
 
-/* =========================================================
- * 디버그용 getter
- * ========================================================= */
-uint8_t SafeDriveManual_GetLastCmd(void);
-uint8_t SafeDriveManual_GetLastReqPct(void);
 
 #endif /* INC_SAFE_DRIVE_MANUAL_H_ */
 

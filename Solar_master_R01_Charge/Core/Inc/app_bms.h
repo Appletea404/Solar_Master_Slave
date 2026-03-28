@@ -90,6 +90,5 @@ uint8_t App_Bms_IsDangerNow(void);
 uint8_t App_Bms_GetTargetLimitPct(void);
 uint8_t App_Bms_GetAppliedLimitPct(void);
 
-const char *App_Bms_GetBanner(void);
 
 #endif /* INC_APP_BMS_H_ */
