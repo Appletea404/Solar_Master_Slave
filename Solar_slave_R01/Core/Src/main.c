@@ -220,7 +220,6 @@ int main(void)
   {
 
 
-      Can_Task();
       ST_MACHINE();
 
 

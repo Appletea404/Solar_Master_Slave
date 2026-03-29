@@ -32,7 +32,7 @@
  */
 
 #include "app_bms.h"
-
+#include "can.h"
 #include "bms_sensor.h"
 #include "bms_safety_manager.h"
 #include "bms_message.h"
@@ -47,8 +47,10 @@
 
 /* =========================================================
  * 로그 설정
+ * ---------------------------------------------------------
+ * UART2는 moserial 입력 용도로도 쓸 수 있으므로 기본 OFF 권장
+ * UART6는 상태 로그 확인용으로 사용
  * ========================================================= */
-#define APP_BMS_USE_UART6_LOG              1U
 
 /* =========================================================
  * 입력 debounce
@@ -452,15 +454,16 @@ void App_Bms_Init(void)
 
 void App_Bms_Task(void)
 {
+    /* 0 BMS 시스템 작동 확인 */
     if (App_Bms_IsReady() == 0U)
     {
         return;
     }
 
-    /* 1) non-blocking sensor service */
+    /* 1 INA219 센서값 수신 */
     BMS_SENSOR_Service();
 
-    /* 2) force stop 아닐 때만 주행 상태머신 동작 */
+    /* 2 force stop 아닐 때만 주행 상태머신 동작 */
     if (g_app_bms.force_stop_lock != 0U)
     {
         Car_Stop();
@@ -470,36 +473,36 @@ void App_Bms_Task(void)
         ST_MACHINE();
     }
 
-    /* 3) 센서 캐시 갱신 */
+    /* 3 모든 센서 측정 값 읽기  */
     BMS_SENSOR_Task();
 
-    /* 4) safety 정책 갱신 */
+    /* 4 safety 정책 갱신 */
     BMS_SAFETY_Task();
 
-    /* 4-1) Danger 자동 강제정지 체크
-     * safety 갱신 직후 danger 여부를 확인하여
+    /* 4-1 Danger 자동 강제정지 체크
+     * safety 정책 갱신 직후 danger 여부를 확인하여
      * Danger 상태 진입 시 자동으로 force stop 처리한다.
      * (수동 P 버튼과 동일한 효과, P 버튼으로만 해제 가능)
      */
     App_Bms_CheckDangerAutoStop();
 
-    /* 4-3) BMS 제한 재적용
+    /* 4-2 BMS 제한 재적용
      * applied_limit_pct가 바뀌었을 때 이미 주행 중인 모터에
      * 즉시 새 속도 제한을 반영한다.
      * 정지 상태이면 내부에서 아무것도 하지 않는다.
      */
     SafeDrive_ReapplyLimit();
 
-    /* 5) CAN pending 처리
+    /* 5 CAN pending 처리
      * force stop 중에도 OFF / force 명령은 나가야 하므로 계속 처리
      */
-//	ST_MACHINE(); //이거테스트용임
     App_Bms_ProcessCanPending();
 
-    /* 6) 로그 */
-#if (APP_BMS_USE_UART6_LOG == 1U)
+    /* 6 Slave로 CAN통신 송출 */
+	Can_Task();
+
+    /* 7 BMS 로그 송출 */
     SHOW_UART6_BMS();
-#endif
 }
 
 void App_Bms_NotifyRemoteCmd(uint8_t cmd)

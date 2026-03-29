@@ -231,54 +231,6 @@ static void ST_HandleCanControl(uint8_t cmd, uint8_t value)
     }
 }
 
-/* ---------------------------------------------------------
- * UART6 로컬 테스트 명령 처리
- * ---------------------------------------------------------
- * A : 자율주행 토글 (ON 시 Trace Init + trace 수동 잠금)
- * D : trace 토글  (자율주행 중에는 ON 차단)
- * K : solar 토글
- * P : force stop / reinit 토글
- * --------------------------------------------------------- */
-static void ST_HandleLocalBtCmd(uint8_t cmd)
-{
-    switch (cmd)
-    {
-        case 'A':
-            if (force_lock == 0)
-            {
-                ST_SetAutoDrive(!auto_drive);
-            }
-            break;
-
-        case 'D':
-            if (force_lock == 0)
-            {
-                ST_SetTrace(!trace_flag);
-            }
-            break;
-
-        case 'K':
-            if (force_lock == 0)
-            {
-                ST_SetSolar(!solar_flag);
-            }
-            break;
-
-        case 'P':
-            if (force_lock == 0)
-            {
-                ST_EnterForceStop();
-            }
-            else
-            {
-                ST_ReinitAll();
-            }
-            break;
-
-        default:
-            break;
-    }
-}
 
 /* =========================================================
  * INIT
@@ -391,20 +343,12 @@ bool ST_GetForceLock(void)
  * ========================================================= */
 void ST_MACHINE(void)
 {
-    CanFrame_t rx;
+    /* 0 CAN 수신 확인 */
+        Can_Task();
+        CanFrame_t rx;
 
-    /* -----------------------------------------------------
-     * UART6 local test (보험용 문자열 터미널 수동으로 쏘면 반응)
-     * ----------------------------------------------------- */
-    if (bt6Flag == 1)
-    {
-        bt6Flag = 0;
-        ST_HandleLocalBtCmd(rxCmd);
-    }
+	/* 1 CAN 수신 변환 및 Auto, Force 확인 */
 
-    /* -----------------------------------------------------
-     * CAN control frame
-     * ----------------------------------------------------- */
     if (Can_ReadFrame(&rx) != 0U)
     {
         if ((rx.id == APP_CAN_ID_CTRL) && (rx.dlc >= 2U))
@@ -413,17 +357,16 @@ void ST_MACHINE(void)
         }
     }
 
-    // 충전 On/Off
+	/* 2 Solar_Charge ON/OFF */
     if (solar_flag)
     {
         App_Charger_Task();
     }
 
-    // 태양추적 On/Off
+	/* 3 Solar_Trace ON/OFF */
     Trace_Mode(trace_flag ? MODE_ACT : MODE_INIT);
 
-    /* 디버그 출력 */
-//    SHOW_UART6_TRACE();
+    /* 4 충전 로그 출력 */
     SHOW_UART6_APP_CHARGER();
 }
 

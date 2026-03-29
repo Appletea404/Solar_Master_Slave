@@ -97,8 +97,6 @@ void SystemClock_Config(void);
 
 
 
-//static const char *Temp_StateStr(TEMP_STATE st);
-//
 
 
 /* USER CODE END PFP */
@@ -148,6 +146,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
     /* UART1 기존 리모컨 경로 */
     STMACHINE_UartRxCpltCallback(huart);
+
 }
 
 
@@ -264,9 +263,6 @@ int main(void)
 
 
 	  App_Bms_Task();
-
-
-	  Can_Task();
 
     /* USER CODE END WHILE */
 
