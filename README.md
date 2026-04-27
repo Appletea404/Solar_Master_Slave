@@ -2,7 +2,7 @@
 
 ## **1. Project Summary (프로젝트 요약)**
 
-> **광원 추적형 태양광 충전 및 다중 센서 안전 제어를 통합한 차세대 EV 플랫폼**
+**광원 추적형 태양광 충전 및 다중 센서 안전 제어를 통합한 차세대 EV 플랫폼**
 
 **HELIOS-BMS** 는 자동차 산업의 전동화 및 SDV(Software Defined Vehicle) 전환 흐름에 대응하여, **태양광 에너지 수집, 고효율 충전 시스템, 배터리 안전 관리, 차량 주행 제어** 기능을 단일 MCU 플랫폼으로 통합한 EV 통합 제어 시스템입니다.
 
@@ -14,14 +14,6 @@
 
 또한 사용자 조작을 위한 **조이스틱 기반 수동 주행 모드** 와 **초음파 센서를 이용한 자율 주행 모드** 를 함께 구현하여 주행 기능을 확장하였으며, **Master–Slave 이중 보드 구조** 와 **CAN 통신** 을 통해 시스템 기능을 분산 제어하도록 설계하였습니다.
 
----
-
-## 👥 1.1 Team & Affiliation (소속 및 팀원)
-
-- **소속:** 대한상공회의소
-- **참여자:** 김수연, 박도영, 유동원, 이석현
-
----
 
 ## 2. Key Features (주요 기능)
 
@@ -68,32 +60,32 @@
 
 ### 3.1 Language (사용 언어)
 
-![C](https://img.shields.io/badge/C-00599C?style=for-the-badge&logo=c&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![C](https://img.shields.io/badge/C-00599C?style=for-the-badge&logo=c&logoColor=white)![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 
 ### 3.2 Development Environment (개발 환경)
 
-| **STM32CubeIDE** | **STM32CubeMX** | **VS Code** |
-| :---: | :---: | :---: |
-| 펌웨어 빌드 및 디버깅 | 핀 / 클럭 / 주변장치 설정 | 코드 편집 및 Git 관리 |
+| **STM32CubeIDE** | **STM32CubeMX** |
+| :---: | :---: |
+| ![STM32CubeIDE](images/stm32cubeide.png) | ![STM32CubeMX](images/stm32cubemx.png) |
+| IDE | Configuration |
 
 ### 3.3 Simulation & Analysis (제어 해석 및 시뮬레이션)
 
 | **Google Colab** | **Falstad Circuit Simulator** |
 | :---: | :---: |
+| <img src="images/Colab.png" width="200"> | <img src="images/Falstad.png" width="200"> |
 | 4차 소신호 모델 / Bode Plot 분석 | Buck Converter 회로 동작 검증 |
 
 ### 3.4 Debugging Tools (실험 및 디버깅 환경)
 
 | **Moserial** | **Serial Bluetooth Terminal** |
 | :---: | :---: |
+| <img src="images/Moserial.png" width="200"> | <img src="images/Serial_Bluetooth_Terminal.png" width="200"> |
 | UART 로그 모니터링 | Bluetooth 기반 명령 송수신 테스트 |
 
 ### 3.5 Collaboration Tools (협업 도구)
 
-![Github](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)
-![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)
-![Notion](https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white)
+![Github](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)![Notion](https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white)
 
 ---
 
@@ -146,10 +138,10 @@ HELIOS_BMS/
 
 ### 4.2 Hardware Block Diagram (전체 하드웨어 블록도)
 
-> 전체 시스템 하드웨어 블록도 이미지를 추가하세요.
-> `![HW_BlockDiagram](images/HW_BLOCK_DIAGRAM.png)`
 
-본 시스템은 **Master Board** 와 **Slave Board** 의 이중 제어 구조로 설계되었으며, 두 보드는 **CAN 통신** 을 통해 연결되어 시스템 기능을 분산 제어합니다.
+![HW Diagram](<images/HW Block Diagram.png>)
+
+
 
 | **Master Board** | **Slave Board** |
 | :---: | :---: |
@@ -160,8 +152,7 @@ HELIOS_BMS/
 
 ### 4.3 Master Board FSM
 
-> Master Board 상태 머신 다이어그램을 추가하세요.
-> `![Master_FSM](images/Master_FSM.png)`
+![MasterBoard](<images/Master Board FSM.png>)
 
 ```
 INIT  ─────►  IDLE  ◄────►  DRIVE (Manual / Auto)
@@ -171,21 +162,12 @@ INIT  ─────►  IDLE  ◄────►  DRIVE (Manual / Auto)
 
 ### 4.4 Slave Board FSM
 
-> Slave Board 상태 머신 다이어그램을 추가하세요.
-> `![Slave_FSM](images/Slave_FSM.png)`
+![SlaveBoard](<images/Slave Board FSM.png>)
 
 ```
 INIT  ─────►  CAN_IDLE  ─────►  TRACKING / CHARGING (CC / CV / MPPT)
 ```
 
-### 4.5 CAN Application Protocol (CAN 데이터 필드)
-
-| **CAN ID** | **DLC** | **Byte[0] CMD** | **Byte[1] VALUE** | **기능** |
-| :---: | :---: | :---: | :---: | :---: |
-| 0x123 | 2 | 0x10 | 0x00 / 0x01 | 태양광 트래킹 ON / OFF |
-| 0x123 | 2 | 0x11 | 0x00 / 0x01 | 태양광 충전 ON / OFF |
-| 0x123 | 2 | 0x12 | 0x01 / 0x02 | 강제 정지 / 강제 재초기화 |
-| 0x123 | 2 | 0x13 | 0x00 / 0x01 | 자율주행 ON / OFF |
 
 ---
 
@@ -274,25 +256,30 @@ $$i_{ref} = \min(I_{CC}, \ I_{CV}, \ I_{MPPT})$$
 
 ### 6.1 Final Product (완성품)
 
-> 완성품 사진을 아래 형식으로 추가하세요.
+### 3-2. 하드웨어 제작 및 조립
 
-| **전면 (Front)** | **상단 (Top)** | **후면 (Back)** |
-| :---: | :---: | :---: |
-| `<img src="images/Front.jpg" width="250">` | `<img src="images/Top.jpg" width="250">` | `<img src="images/Back.jpg" width="250">` |
+| **리모컨 제작 (전면 & 후면부)** | **감지 모듈 PCB 제작 (상부 & 하부 사진)** |
+| :---: | :---: |
+| <img src="images/1.jpg" width="200"> <img src="images/2.jpg" width="200"> | <img src="images/3.jpg" width="200"> <img src="images/4.jpg" width="200"> | 
+| **광원 추적 시스템** | **Buck Converter 기반 배터리 충전 시스템** |
+| **(1) 구동 파트 제작 (상부 & 하부 사진)** | **(1) 구동 파트 제작 (좌측 & 우측 사진)** |
+| <img src="images/5.jpg" width="200"> <img src="images/6.jpg" width="200"> | <img src="images/7.jpg" width="200"> <img src="images/8.jpg" width="200"> |
+| **(2) 광원 추적 모듈 제작 (회로 기판 & 회전 장치 사진)** | **(2) 배터리 충전 모듈 제작** |
+| <img src="images/9.jpg" width="200"> <img src="images/10.jpg" width="200"> | <img src="images/11.jpg" width="200"> |
+| **(3) 동작 구현 (좌측 & 우측 사진)** | **(3) 동작 구현 (좌측 & 우측 사진)** |
+| <img src="images/12.jpg" width="200"> <img src="images/13.jpg" width="200"> | <img src="images/14.jpg" width="200"> <img src="images/15.jpg" width="200"> |
+| **(4) 최종 시스템 구현 (전면 & 후면 사진)** | **(4) 최종 시스템 구현 (좌측 & 우측 사진)** |
+| <img src="images/16.jpg" width="200"> <img src="images/17.jpg" width="200"> | <img src="images/18.jpg" width="200"> <img src="images/19.jpg" width="200"> |
 
-| **광원 추적 시스템** | **Buck Converter 충전 모듈** | **BMS 감지 모듈** |
-| :---: | :---: | :---: |
-| `<img src="images/SolarTracker.jpg" width="250">` | `<img src="images/BuckCharger.jpg" width="250">` | `<img src="images/BMS_Module.jpg" width="250">` |
+
 
 ### 6.2 Demonstration (시연 영상)
 
-> 시연 영상 링크를 아래 형식으로 추가하세요.
 
-```html
 <a href="유튜브_링크" target="_blank">
   <img src="images/youtube.jpg" alt="Watch Demo Video" width="300" />
 </a>
-```
+
 
 **Demonstration Check List:**
 
@@ -485,15 +472,3 @@ $$i_{ref} = \min(I_{CC}, \ I_{CV}, \ I_{MPPT})$$
 | 조이스틱 | PS2 듀얼 로커 모듈 (ELB070682) | - |
 | Bluetooth | HC-05 (SZH-EK069) | - |
 
----
-
-## 📚 9. References (참고문헌)
-
-1. International Energy Agency (IEA), "Korea Energy Profile," [link](https://www.iea.org/countries/korea/energy-mix)
-2. U.S. Energy Information Administration (EIA), "Oil flows through the Strait of Hormuz," [link](https://www.eia.gov/todayinenergy/detail.php?id=61002)
-3. MDPI, "Photovoltaic Modeling: A Comprehensive Analysis of the I–V Characteristic Curve," 2024, [link](https://www.mdpi.com/2071-1050/16/1/432)
-4. 김일송, 「PSIM과 MATLAB을 활용한 전력변환 제어기 설계」, 홍릉과학출판사, 2023.
-5. CTA, "CES 2026 Innovation Awards – Vehicle Solar Module," [link](https://www.ces.tech/ces-innovation-awards/2026/solarstic-injection-molded-vehicle-solar-module/)
-6. Microchip Technology, "Photovoltaic I–V Curve and Maximum Power Point (MPP)," [link](https://ww1.microchip.com/downloads/en/appnotes/00001521a.pdf)
-7. Texas Instruments, "Understanding Buck Power Stages in Switchmode Power Supplies (SLVA057)," [link](https://www.ti.com/lit/an/slva057/slva057.pdf)
-8. 머니투데이, "청라 전기차 화재 1년.. BMS 이상 경고 없어," [link](https://www.mt.co.kr/estate/2025/09/11/2025091109535276893)
