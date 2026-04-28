@@ -10,12 +10,6 @@
 
 ## 2. Key Features (주요 기능)
 
-### ☀️ 광원 추적 시스템 (Solar Tracking)
-
-- **4채널 CDS 조도 센서** 의 상대 비교 방식 기반 태양 방향 추정
-- 좌우 센서 차이(`error_x`)로 **Pan**, 상하 센서 차이(`error_y`)로 **Tilt** 결정
-- **Pan/Tilt 2축 서보 모터(MG996R)** 와 PWM 제어를 통한 패널 각도 실시간 추적
-- 센서 출력단에 **저역통과 필터(LPF, fc ≒ 15.9 Hz)** 와 **OP-AMP 버퍼(LM358N)** 적용으로 노이즈 제거 및 임피던스 매칭
 
 ### 🔋 Buck Converter 기반 태양광 충전 시스템
 
@@ -40,12 +34,18 @@
 - TIM3 입력 캡처를 이용한 ECHO 펄스 측정 및 거리 환산 ($Distance = EchoPulse / 58$)
 - **L298N 모터 드라이버** 기반 PWM 속도 제어 및 좌·우 센서 거리 비교를 통한 회피 방향 결정
 
-### 📡 CAN 통신 기반 분산 제어 구조
+### 📡 CAN 통신 기반 분산 제어
 
 - **Master Board ↔ Slave Board** 간 CAN 통신을 통한 기능 분산
 - **MCP2515 + TJA1050** 구성, 8 MHz 크리스탈 기준 **125 kbps** 비트레이트
 - 비트 타이밍 세그먼트(Sync / Prop / Phase1 / Phase2 = 1 / 3 / 8 / 4 Tq) 설계 및 **샘플 포인트 75 %** 적용
-- 표준 데이터 프레임 기반 애플리케이션 프로토콜 정의 (CMD / VALUE 2바이트)
+
+### ☀️ 광원 추적 시스템 (Solar Tracking)
+
+- **4채널 CDS 조도 센서** 의 상대 비교 방식 기반 태양 방향 추정
+- 좌우 센서 차이(`error_x`)로 **Pan**, 상하 센서 차이(`error_y`)로 **Tilt** 결정
+- **Pan/Tilt 2축 서보 모터(MG996R)** 와 PWM 제어를 통한 패널 각도 실시간 추적
+- 센서 출력단에 **저역통과 필터(LPF, fc ≒ 15.9 Hz)** 와 **OP-AMP 버퍼(LM358N)** 적용으로 노이즈 제거 및 임피던스 매칭
 
 ---
 
@@ -145,19 +145,12 @@ HELIOS_BMS/
 
 ![MasterBoard](<images/Master Board FSM.png>)
 
-```
-INIT  ─────►  IDLE  ◄────►  DRIVE (Manual / Auto)
-                │
-                └────►  FORCE_STOP   (배터리 DANGER 또는 정지 명령)
-```
+
 
 ### 4.4 Slave Board FSM
 
 ![SlaveBoard](<images/Slave Board FSM.png>)
 
-```
-INIT  ─────►  CAN_IDLE  ─────►  TRACKING / CHARGING (CC / CV / MPPT)
-```
 
 
 ---
@@ -166,7 +159,7 @@ INIT  ─────►  CAN_IDLE  ─────►  TRACKING / CHARGING (CC 
 
 ### 5.1 4차 소신호 모델링 (4th-order Small-signal Modeling)
 
-태양전지–배터리 결합 시스템은 입력(태양전지의 비선형 I-V 특성)과 출력(배터리 CC-CV 특성)이 동시에 변하는 비선형 시스템입니다. 단순 Buck Converter 모델로는 이러한 동특성을 정확히 반영할 수 없으므로, 입력과 출력의 결합 특성을 고려한 **4차 소신호 모델** 을 구성하였습니다.
+태양전지–배터리 결합 시스템은 입력(태양전지의 비선형 I-V 특성)과 출력(배터리 CC-CV 특성)이 동시에 변하는 비선형 시스템이다. 단순 Buck Converter 모델로는 이러한 동특성을 정확히 반영할 수 없으므로, 입력과 출력의 결합 특성을 고려한 **4차 소신호 모델** 을 구성하였다.
 
 **상태 변수 정의:**
 
@@ -179,11 +172,11 @@ $$x = [v_{pv}, \ v_{in}, \ i_L, \ v_o]^T$$
 | $i_L$ | 인덕터 전류 |
 | $v_o$ | 출력 전압 |
 
-입력단을 $v_{pv}$ 와 $v_{in}$ 으로 분리하여 태양전지의 비선형 특성과 스위칭 동작이 결합된 입력 동특성을 반영하였습니다.
+입력단을 $v_{pv}$ 와 $v_{in}$ 으로 분리하여 태양전지의 비선형 특성과 스위칭 동작이 결합된 입력 동특성을 반영
 
 ### 5.2 MPPT–CC–CV 통합 충전 제어
 
-전류 지령은 **CC, CV, MPPT 조건 중 가장 작은 값** 으로 결정되며, 입력 조건과 배터리 상태에 따라 충전 모드가 자동 전환됩니다.
+전류 지령은 **CC, CV, MPPT 조건 중 가장 작은 값** 으로 결정되며, 입력 조건과 배터리 상태에 따라 충전 모드가 자동 전환
 
 $$i_{ref} = \min(I_{CC}, \ I_{CV}, \ I_{MPPT})$$
 
@@ -194,7 +187,7 @@ $$i_{ref} = \min(I_{CC}, \ I_{CV}, \ I_{MPPT})$$
 | **전류 루프** | 1500 Hz | 300 Hz | 0.457 | 861.9 | 63.1° |
 | **전압 루프** | 1 Hz | 0.2 Hz | 6.54 | 8.21 | 168.6° |
 
-전류 루프는 내부 루프로서 빠른 전류 추종을 위해 높은 대역폭을 가지며, 전압 루프는 외부 루프로서 충분히 느리게 동작하도록 설계하여 **루프 간 간섭을 방지** 하였습니다.
+전류 루프는 내부 루프로서 빠른 전류 추종을 위해 높은 대역폭을 가지며, 전압 루프는 외부 루프로서 충분히 느리게 동작하도록 설계하여 **루프 간 간섭을 방지** 
 
 ### 5.4 BMS 안전 상태 판단 기준
 
@@ -223,7 +216,7 @@ $$i_{ref} = \min(I_{CC}, \ I_{CV}, \ I_{MPPT})$$
 | WARNING 2개 | 40 % |
 | WARNING 3개 또는 DANGER | 0 % (차량 정지) |
 
-속도 제한 값은 **400 ms 주기로 갱신** 되며 **ramp 방식으로 점진적으로 반영** 됩니다.
+속도 제한 값은 **400 ms 주기로 갱신** 되며 **ramp 방식으로 점진적으로 반영**
 
 ### 5.6 수동 주행 명령 (Remote Command Map)
 
@@ -352,7 +345,7 @@ $$error\_y = (S1 + S3) - (S2 + S4) \quad \text{(상측 합 - 하측 합)}$$
 
 
 
-### 3-2. 하드웨어 제작 및 조립
+### 6.2 하드웨어 제작 및 조립
 
 | **리모컨 제작 (전면 & 후면부)** | **감지 모듈 PCB 제작 (상부 & 하부 사진)** |
 | :---: | :---: |
@@ -368,7 +361,7 @@ $$error\_y = (S1 + S3) - (S2 + S4) \quad \text{(상측 합 - 하측 합)}$$
 | <img src="images/16.jpg" width="150">&nbsp;<img src="images/17.jpg" width="150"> | <img src="images/18.jpg" width="150">&nbsp;<img src="images/19.jpg" width="150"> |
 
 
-### 6.2 Demonstration (시연 영상)
+### 6.3 Demonstration (시연 영상)
 
 
 <a href="https://www.youtube.com/playlist?list=PL6xfXHA4BYR9Hl2bLpyACR_jpAFE2U8kd" target="_blank">
