@@ -126,11 +126,9 @@ HELIOS_BMS/
 ├── Remote/                          # 원격 조종기 (STM32F411 Blackpill)
 │   └── Core/
 │       └── Src/
-│           ├── main.c               # 조이스틱 ADC + 푸쉬버튼 입력
-│           ├── joystick.c           # ADC1 연속 변환 모드 샘플링
-│           └── bt_uart.c            # HC-05 Bluetooth UART 송신
+│           └── main.c               # 조이스틱 ADC + 푸쉬버튼 입력
 │
-├── 공모전파일/                        # 공모전 제출 자료 (보고서, BOM, 영상)
+├── 공모전파일/                        # 공모전 제출 자료 (보고서, 사진, BOM)
 │
 ├── .gitignore                       # Git 제외 항목 설정
 └── README.md                        # 프로젝트 개요 문서
@@ -256,7 +254,7 @@ $$i_{ref} = \min(I_{CC}, \ I_{CV}, \ I_{MPPT})$$
 
 ### 6.1 Final Product (완성품)
 
-### 3-2. 하드웨어 제작 및 조립
+<!-- ### 3-2. 하드웨어 제작 및 조립
 
 | **리모컨 제작 (전면 & 후면부)** | **감지 모듈 PCB 제작 (상부 & 하부 사진)** |
 | :---: | :---: |
@@ -269,8 +267,23 @@ $$i_{ref} = \min(I_{CC}, \ I_{CV}, \ I_{MPPT})$$
 | **(3) 동작 구현 (좌측 & 우측 사진)** | **(3) 동작 구현 (좌측 & 우측 사진)** |
 | <img src="images/12.jpg" width="200"> <img src="images/13.jpg" width="200"> | <img src="images/14.jpg" width="200"> <img src="images/15.jpg" width="200"> |
 | **(4) 최종 시스템 구현 (전면 & 후면 사진)** | **(4) 최종 시스템 구현 (좌측 & 우측 사진)** |
-| <img src="images/16.jpg" width="200"> <img src="images/17.jpg" width="200"> | <img src="images/18.jpg" width="200"> <img src="images/19.jpg" width="200"> |
+| <img src="images/16.jpg" width="200"> <img src="images/17.jpg" width="200"> | <img src="images/18.jpg" width="200"> <img src="images/19.jpg" width="200"> | -->
 
+
+### 3-2. 하드웨어 제작 및 조립
+
+| **리모컨 제작 (전면 & 후면부)** | **감지 모듈 PCB 제작 (상부 & 하부 사진)** |
+| :---: | :---: |
+| <img src="images/1.jpg" width="150">&nbsp;<img src="images/2.jpg" width="150"> | <img src="images/3.jpg" width="150">&nbsp;<img src="images/4.jpg" width="150"> | 
+| **광원 추적 시스템** | **Buck Converter 기반 배터리 충전 시스템** |
+| **(1) 구동 파트 제작 (상부 & 하부 사진)** | **(1) 구동 파트 제작 (좌측 & 우측 사진)** |
+| <img src="images/5.jpg" width="150">&nbsp;<img src="images/6.jpg" width="150"> | <img src="images/7.jpg" width="150">&nbsp;<img src="images/8.jpg" width="150"> |
+| **(2) 광원 추적 모듈 제작 (회로 기판 & 회전 장치 사진)** | **(2) 배터리 충전 모듈 제작** |
+| <img src="images/9.jpg" width="150">&nbsp;<img src="images/10.jpg" width="150"> | <img src="images/11.jpg" width="150"> |
+| **(3) 동작 구현 (좌측 & 우측 사진)** | **(3) 동작 구현 (좌측 & 우측 사진)** |
+| <img src="images/12.jpg" width="150">&nbsp;<img src="images/13.jpg" width="150"> | <img src="images/14.jpg" width="150">&nbsp;<img src="images/15.jpg" width="150"> |
+| **(4) 최종 시스템 구현 (전면 & 후면 사진)** | **(4) 최종 시스템 구현 (좌측 & 우측 사진)** |
+| <img src="images/16.jpg" width="150">&nbsp;<img src="images/17.jpg" width="150"> | <img src="images/18.jpg" width="150">&nbsp;<img src="images/19.jpg" width="150"> |
 
 
 ### 6.2 Demonstration (시연 영상)
